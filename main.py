@@ -4,10 +4,11 @@ import csv
 import time
 import random
 import sqlite3
+import cfscrape
 
 from bot.bot import text_handler
 
-main_url = 'https://www.avito.ru/orenburg/doma_dachi_kottedzhi/prodam/dom-ASgBAQICAUSUA9AQAUDYCBTOWQ?f=ASgBAQECAUSUA9AQAUDYCBTOWQFFwBMYeyJmcm9tIjpudWxsLCJ0byI6MTQ2NTF9'
+main_url = 'https://www.avito.ru/orenburg/doma_dachi_kottedzhi/prodam-ASgBAgICAUSUA9AQ?f=ASgBAQECAUSUA9AQAUDYCCTKWc5ZAUXAExh7ImZyb20iOm51bGwsInRvIjoxNDY1Mn0'
 #headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
 def write_csv(result):
@@ -21,6 +22,7 @@ def write_csv(result):
                               item['address'],
                               item['url']
                               ))
+
 def write_sqlite3(result):
     conn = sqlite3.connect("avito_list.db")
     with conn:
@@ -49,20 +51,38 @@ def write_sqlite3(result):
                         text_handler(str(sql_avito_id) + ' id - обновилась цена \n Старая цена = ' + str(item_price[0][0]) + ' руб. / Новая цена = ' + str(sql_price) + ' руб.\n\nСсылка ' + str(sql_url))
                         cur.execute("UPDATE offers SET price=? WHERE avito_id=?", (sql_price, sql_avito_id))
                         print('Price update')
+                        time.sleep(5)
 
                 else:
                     text_handler('Новое объявление ' + str(sql_avito_id) + '\n\nЦена: '+ str(sql_price) + ' руб.' + '\n\nАдрес: ' + str(sql_address) + '\n\nСсылка ' + str(sql_url))
                     print('No ID')
                     cur.execute("INSERT OR IGNORE INTO offers ('avito_id','name','price','address','url') VALUES (?,?,?,?,?)", (sql_avito_id, sql_name, sql_price, sql_address, sql_url))
                     print('New Offer')
+                    time.sleep(5)
     conn.commit()
     conn.close()
+
+def get_session():
+    session = requests.Session()
+    session.headers = {
+            'Host':'www.avito.ru',
+            'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0)   Gecko/20100101 Firefox/69.0',
+            'Accept':'text/html',
+            'Accept-Language':'ru,en-US;q=0.5',
+            'DNT':'1',
+            'Connection':'keep-alive',
+            'Upgrade-Insecure-Requests':'1',
+            'Pragma':'no-cache',
+            'Cache-Control':'no-cache'}
+    return cfscrape.create_scraper(sess=session)
+
 
 def clean(text):
     return text.replace('\t','').replace('\n','').strip()
 
 def get_page_data(page_url):
-    r = requests.get(page_url)
+    session = get_session()
+    r = session.get(page_url)
     soup = BeautifulSoup(r.text, 'html.parser')
     table = soup.find('div',{"data-marker":"catalog-serp"})
     rows = table.find_all('div',{"data-marker":"item"})
@@ -78,8 +98,9 @@ def get_page_data(page_url):
     return result
 
 def main(main_url):
-    r=requests.get(main_url + '?&pmax=4000000&s=1&user=1&p=1')
-    print(main_url + '?p=1&pmax=4000000&s=1&user=1')
+    session = get_session()
+    r=session.get(main_url + '&pmax=3500000&pmin=2500000&p=1')
+    print(main_url + '?p=1&pmax=3500000&pmin=2500000')
     if r.status_code == 200:
         soup=BeautifulSoup(r.text, 'html.parser')
         count_page = soup.find_all('span',{"class":"pagination-item-1WyVp"})[-2].text
@@ -88,7 +109,7 @@ def main(main_url):
             value = random.random()
             scaled_value = 1 + (value * (9 - 5))
             print('Parsing page# ' + str(i) + ' of ' + count_page)
-            page_url = main_url + '&pmax=4000000&s=1&user=1&p=' + str(i)
+            page_url = main_url + '&pmax=3500000&pmin=2500000&p=' + str(i)
             print(page_url)
             result+=get_page_data(page_url)
             time.sleep(scaled_value)

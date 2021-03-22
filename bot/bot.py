@@ -13,3 +13,4 @@ def text_handler(text):
     #text = message.text.lower()
     chat_id = '-1001487777112'
     bot.send_message(chat_id, text)
+

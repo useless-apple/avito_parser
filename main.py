@@ -5,6 +5,7 @@ import time
 import random
 import sqlite3
 
+from bot.bot import text_handler
 
 main_url = 'https://www.avito.ru/orenburg/doma_dachi_kottedzhi/prodam/dom-ASgBAQICAUSUA9AQAUDYCBTOWQ?f=ASgBAQECAUSUA9AQAUDYCBTOWQFFwBMYeyJmcm9tIjpudWxsLCJ0byI6MTQ2NTF9'
 #headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
@@ -45,9 +46,12 @@ def write_sqlite3(result):
                         print('Price ok')
                         continue
                     else:
+                        text_handler(str(sql_avito_id) + ' id - обновилась цена \n Старая цена = ' + str(item_price[0][0]) + ' руб. / Новая цена = ' + str(sql_price) + ' руб.\n\nСсылка ' + str(sql_url))
                         cur.execute("UPDATE offers SET price=? WHERE avito_id=?", (sql_price, sql_avito_id))
                         print('Price update')
+
                 else:
+                    text_handler('Новое объявление ' + str(sql_avito_id) + '\n\nЦена: '+ str(sql_price) + ' руб.' + '\n\nАдрес: ' + str(sql_address) + '\n\nСсылка ' + str(sql_url))
                     print('No ID')
                     cur.execute("INSERT OR IGNORE INTO offers ('avito_id','name','price','address','url') VALUES (?,?,?,?,?)", (sql_avito_id, sql_name, sql_price, sql_address, sql_url))
                     print('New Offer')

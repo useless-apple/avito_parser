@@ -1,0 +1,13 @@
+altgraph==0.17
+beautifulsoup4==4.9.3
+bs4==0.0.1
+certifi==2020.12.5
+chardet==4.0.0
+future==0.18.2
+idna==2.10
+pefile==2019.4.18
+pyTelegramBotAPI==3.7.6
+pywin32-ctypes==0.2.0
+requests==2.25.1
+soupsieve==2.2.1
+urllib3==1.26.4

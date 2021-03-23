@@ -1,7 +1,7 @@
 import telebot
 
 #Токен Вашего бота телеграм
-TOKEN = "1763434220:AAHwjEuTltLljp6rTfGf0gLSBe-LUE7J5vU"
+TOKEN = "TOKEN"
 bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(content_types=['text'])

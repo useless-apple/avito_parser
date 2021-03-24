@@ -80,7 +80,7 @@ def get_session():
 
 
 def clean(text):
-    return text.replace('\t','').replace('\n','').strip()
+    return text.replace('\t','').replace('\n','').replace('\xa0',' ').strip()
 
 def get_page_data(page_url):
     session = get_session()
@@ -104,14 +104,17 @@ def get_page_data_item(sql_url):
     r = session.get(sql_url)
     soup = BeautifulSoup(r.text, 'html.parser')
     item_page = soup.find('div', {"class": "item-view"})
-    item_page_options = item_page.find_all('span',{"class":"item-params-label"})
+    item_page_options = item_page.find_all('li',{"class":"item-params-list-item"})
+    result_options = []
+    for a in item_page_options:
+        result_options.append(clean(a.text))
+
 
     item_page_text = item_page.find('div',{"itemprop":"description"}).text
     item_page_coordinatesX = item_page.find('div',{"class":"item-map-wrapper"}).get("data-map-lat")
     item_page_coordinatesY = item_page.find('div',{"class":"item-map-wrapper"}).get("data-map-lon")
 
-    print(len(item_page_options))
-    print(item_page_options)
+    print(result_options)
     print(item_page_text)
     print(item_page_coordinatesX)
     print(item_page_coordinatesY)
@@ -120,9 +123,6 @@ def get_page_data_item(sql_url):
 
 
 def get_address_geo(coordinatesX,coordinatesY):
-    r=requests.get('http://geocode-maps.yandex.ru/1.x/?geocode='+coordinatesX+','+coordinatesY)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    print(soup)
 
 def main(main_url):
     session = get_session()
@@ -150,5 +150,5 @@ def main(main_url):
         main(main_url)
 
 if __name__ == '__main__':
-    main(main_url)
-    #get_address_geo("51.789981","55.047341")
+    #main(main_url)
+    get_address_geo("51.789981","55.047341")

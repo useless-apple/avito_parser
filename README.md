@@ -9,4 +9,4 @@ My first commit,
 
 Меняем ссылку на свой запрос на avito main.py
 Достаточно указать токен бота в bot.py
-И установить библиотеки (под linux) > `--readlink -f PipInstaller.txt`.
+И установить библиотеки (под linux) > `pip install -r -f PipInstaller.txt`.

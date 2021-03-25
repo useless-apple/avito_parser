@@ -75,7 +75,7 @@ def get_session():
     session = requests.Session()
     session.headers = {
         'Host': 'www.avito.ru',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0)   Gecko/20100101 Firefox/69.0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36',
         'Accept': 'text/html',
         'Accept-Language': 'ru,en-US;q=0.5',
         'DNT': '1',
@@ -92,19 +92,20 @@ def clean(text):
 def return_catalog(page_url):
     session = get_session()
     r = session.get(page_url)
+    print('I am sleeping')
 
 def get_page_data(page_url):
 
     session = get_session()
     r = session.get(page_url)
-
+    print(page_url)
     soup = BeautifulSoup(r.text, 'html.parser')
     table = soup.find('div', {"data-marker": "catalog-serp"})
     rows = table.find_all('div', {"data-marker": "item"})
     result = []
     for index in range(len(rows)):
         row = rows[index]
-        print('Parsing item# ' + str(index) + ' of ' + str(len(rows)))
+        print('Parsing item# ' + str(index+1) + ' of ' + str(len(rows)))
         value = random.random()
         scaled_value = 1 + (value * (10 - 5))
         avito_id = int(row.get('data-item-id'))
@@ -122,10 +123,10 @@ def get_page_data(page_url):
 
 
 def get_page_data_item(url):
-
+    time.sleep(5)
+    print('New Page')
     session = get_session()
     r = session.get(url)
-
     result = {}
     if r.status_code == 200:
 
@@ -173,7 +174,7 @@ def main(main_url):
         count_page = soup.find_all('span', {"class": "pagination-item-1WyVp"})[-2].text
         result = []
 
-        for i in range(1):
+        for i in range(1,int(count_page)):
 
             value = random.random()
             scaled_value = 1 + (value * (9 - 5))

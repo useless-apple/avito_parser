@@ -5,8 +5,10 @@ import time
 import random
 import sqlite3
 import cfscrape
+import json
 
 from bot.bot import text_handler
+from bot.settings import GOOGLE_TOKEN
 
 #Указываем ссылку на запрос
 main_url = 'https://www.avito.ru/orenburg/doma_dachi_kottedzhi/prodam-ASgBAgICAUSUA9AQ?f=ASgBAQECAUSUA9AQAUDYCCTKWc5ZAUXAExh7ImZyb20iOm51bGwsInRvIjoxNDY1Mn0'
@@ -26,6 +28,8 @@ def write_csv(result):
 
 #если делать по cron то путь к .db файлу должен быть полностью, иначе cron остановит скрипт.
 def write_sqlite3(result):
+    print(result)
+    exit(0)
     conn = sqlite3.connect("avito_list.db")
     with conn:
         cur = conn.cursor()
@@ -42,8 +46,7 @@ def write_sqlite3(result):
                 if (item_id == [(sql_avito_id,)]):
                     print('ID found')
                     cur.execute('SELECT price FROM offers WHERE avito_id=?', (sql_avito_id,))
-                    #item_price = cur.fetchall()
-                    get_page_data_item(sql_url)
+                    item_price = cur.fetchall()
 
                     if(item_price == [(sql_price,)]):
                         print('Price ok')
@@ -59,7 +62,6 @@ def write_sqlite3(result):
                     print('No ID ' + str(sql_avito_id))
                     cur.execute("INSERT OR IGNORE INTO offers ('avito_id','name','price','address','url') VALUES (?,?,?,?,?)", (sql_avito_id, sql_name, sql_price, sql_address, sql_url))
                     print('New Offer')
-                    get_page_data_item(sql_url)
                     time.sleep(5)
     conn.commit()
     conn.close()
@@ -88,41 +90,57 @@ def get_page_data(page_url):
     soup = BeautifulSoup(r.text, 'html.parser')
     table = soup.find('div',{"data-marker":"catalog-serp"})
     rows = table.find_all('div',{"data-marker":"item"})
+    print(rows[0])
+    print(len(rows))
     result = []
-    for row in rows:
+    for index in range(2):
+        row = rows[index]
+        print('Parsing item#' + str(index) +' of '+ str(len(rows)))
+        value = random.random()
+        scaled_value = 3 + (value * (13 - 5))
         avito_id = int(row.get('data-item-id'))
         name = clean(row.find('h3',{"class":"title-root-395AQ"}).text)
         price = int(clean(row.find('meta', {"itemprop": "price"}).get("content")))
         url = 'https://avito.ru' + row.find('a', {"class":"iva-item-sliderLink-2hFV_"}).get("href")
         address = clean(row.find('span', {"class":"geo-address-9QndR"}).text)
-        item = {'avito_id':avito_id,'name':name,'price':price,'address':address,'url':url,}
+        item = {'avito_id':avito_id,'name':name,'price':price,'address':address,'url':url,'item-info':get_page_data_item(url)}
         result.append(item)
+        time.sleep(scaled_value)
     return result
 
-def get_page_data_item(sql_url):
+def get_page_data_item(url):
     session = get_session()
-    r = session.get(sql_url)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    item_page = soup.find('div', {"class": "item-view"})
-    item_page_options = item_page.find_all('li',{"class":"item-params-list-item"})
-    result_options = []
-    for a in item_page_options:
-        result_options.append(clean(a.text))
-
-
-    item_page_text = item_page.find('div',{"itemprop":"description"}).text
-    item_page_coordinatesX = item_page.find('div',{"class":"item-map-wrapper"}).get("data-map-lat")
-    item_page_coordinatesY = item_page.find('div',{"class":"item-map-wrapper"}).get("data-map-lon")
-
-    print(result_options)
-    print(item_page_text)
-    print(item_page_coordinatesX)
-    print(item_page_coordinatesY)
-
+    r = session.get(url)
+    result = {}
+    if r.status_code == 200:
+        soup = BeautifulSoup(r.text, 'html.parser')
+        item_page = soup.find('div', {"class": "item-view"})
+        #item_page_options = item_page.find_all('li',{"class":"item-params-list-item"})
+        #result_options = []
+        #for a in item_page_options:
+            #result_options.append(clean(a.text))
+        item_page_text = item_page.find('div',{"itemprop":"description"}).text
+        coordinatesX = item_page.find('div',{"class":"item-map-wrapper"}).get("data-map-lat")
+        coordinatesY = item_page.find('div',{"class":"item-map-wrapper"}).get("data-map-lon")
+        result['address'] = get_address_geo(coordinatesX, coordinatesY)
+        result['item_page_text'] = item_page_text
+        return result
+    else:
+        return result
 
 
 
 def get_address_geo(coordinatesX,coordinatesY):
+    r = requests.get('https://nominatim.openstreetmap.org/reverse?format=json&lat='+ coordinatesX +'&lon='+ coordinatesY +'&zoom=18&addressdetails=1%22')
+    soup = BeautifulSoup(r.text, 'html.parser')
+    result = {}
+    streetmap_json = json.loads(soup.text)
+    addreess_json = streetmap_json.get('address')
+    result['house_number'] = str(addreess_json.get('house_number')) or 'Без номера'
+    result['road'] = str(addreess_json.get('road'))
+    result['city_district'] = str(addreess_json.get('city_district'))
+    result['city'] = str(addreess_json.get('city'))
+    return result
 
 def main(main_url):
     session = get_session()
@@ -142,7 +160,6 @@ def main(main_url):
             time.sleep(scaled_value)
 
         print(result)
-        #write_csv(result)
         write_sqlite3(result)
     else:
         print('Error:'+ str(r.status_code))
@@ -150,5 +167,5 @@ def main(main_url):
         main(main_url)
 
 if __name__ == '__main__':
-    #main(main_url)
-    get_address_geo("51.789981","55.047341")
+    main(main_url)
+    #get_address_geo("51.789981","55.047341")

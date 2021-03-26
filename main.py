@@ -100,8 +100,6 @@ def get_page_data_item(url):
         coordinatesX = item_page.find('div', {"class": "item-map-wrapper"}).get("data-map-lat")
         coordinatesY = item_page.find('div', {"class": "item-map-wrapper"}).get("data-map-lon")
 
-        print(coordinatesX,coordinatesY)
-
         result['avito_id'] = int(item_page.find('div', {"class": "item-map-wrapper"}).get("data-item-id"))
         result['name'] = clean(item_page.find('span', {'itemprop': "name"}).text)
         result['price'] = int(clean(item_page.find('span', {"itemprop": "price"}).get("content")))
@@ -112,6 +110,7 @@ def get_page_data_item(url):
 
         return result
     else:
+        print(str(r.status_code))
         return result
 
 
@@ -131,7 +130,7 @@ def get_address_geo(coordinatesX, coordinatesY):
 
 def random_value():
     value = random.random()
-    scaled_value = 1 + (value * (10 - 5))
+    scaled_value = 2 + (value * (11 - 5))
     return scaled_value
 
 

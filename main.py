@@ -10,7 +10,7 @@ import json
 from bot.bot import text_handler
 
 # Указываем ссылку на запрос
-main_url = 'https://www.avito.ru/orenburg/doma_dachi_kottedzhi/prodam-ASgBAgICAUSUA9AQ?f=ASgBAQECAUSUA9AQAUDYCCTKWc5ZAUXAExh7ImZyb20iOm51bGwsInRvIjoxNDY0N30'
+MAIN_URL = 'https://www.avito.ru/orenburg/doma_dachi_kottedzhi/prodam-ASgBAgICAUSUA9AQ?f=ASgBAQECAUSUA9AQAUDYCCTKWc5ZAUXAExh7ImZyb20iOm51bGwsInRvIjoxNDY0N30'
 
 def get_session():
     session = requests.Session()
@@ -27,11 +27,11 @@ def get_session():
     return cfscrape.create_scraper(sess=session)
 
 
-def main(main_url):
+def main(MAIN_URL):
     time.sleep(5)
     session = get_session()
     # указываем доп фильтрацию по цене и для первого запроса страницу пагинации 1
-    r = session.get(main_url + '&pmax=3500000&pmin=2500000&p=1')
+    r = session.get(MAIN_URL + '&pmax=3500000&pmin=2500000&p=1')
 
     if r.status_code == 200:
 
@@ -45,7 +45,7 @@ def main(main_url):
             scaled_value = random_value()
             print('Parsing page# ' + str(i+1) + ' of ' + count_page)
             # Для последующих страниц, пагинацию генерим
-            page_url = main_url + '&pmax=3500000&pmin=2500000&p=' + str(i)
+            page_url = MAIN_URL + '&pmax=3500000&pmin=2500000&p=' + str(i)
             print('_____________________________________________')
             result += get_page_data(page_url)
             time.sleep(scaled_value)
@@ -56,34 +56,38 @@ def main(main_url):
 
         print('Error:' + str(r.status_code))
         time.sleep(600)
-        main(main_url)
+        main(MAIN_URL)
 
 
 def get_page_data(page_url):
 
     session = get_session()
     r = session.get(page_url)
+    if r.status_code == 200:
+        soup = BeautifulSoup(r.text, 'html.parser')
 
-    soup = BeautifulSoup(r.text, 'html.parser')
+        table = soup.find('div', {"data-marker": "catalog-serp"})
+        rows = table.find_all('div', {"data-marker": "item"})
 
-    table = soup.find('div', {"data-marker": "catalog-serp"})
-    rows = table.find_all('div', {"data-marker": "item"})
+        result = []
+        for index in range(len(rows)):
+            row = rows[index]
+            print('Parsing item# ' + str(index+1) + ' of ' + str(len(rows)))
 
-    result = []
-    for index in range(len(rows)):
-        row = rows[index]
-        print('Parsing item# ' + str(index+1) + ' of ' + str(len(rows)))
+            scaled_value = random_value()
 
-        scaled_value = random_value()
+            url = 'https://avito.ru' + row.find('a', {"class": "iva-item-sliderLink-2hFV_"}).get("href")
+            item = get_page_data_item(url)
+            print(url)
 
-        url = 'https://avito.ru' + row.find('a', {"class": "iva-item-sliderLink-2hFV_"}).get("href")
-        item = get_page_data_item(url)
-        print(url)
-
-        return_catalog(page_url)
-        result.append(item)
-        time.sleep(scaled_value)
-    return result
+            return_catalog(page_url)
+            result.append(item)
+            time.sleep(scaled_value)
+        return result
+    else:
+        print('Error:' + str(r.status_code))
+        time.sleep(600)
+        main(MAIN_URL)
 
 
 def get_page_data_item(url):

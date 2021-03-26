@@ -8,7 +8,6 @@ import cfscrape
 import json
 
 from bot.bot import text_handler
-from bot.settings import GOOGLE_TOKEN
 
 # Указываем ссылку на запрос
 main_url = 'https://www.avito.ru/orenburg/doma_dachi_kottedzhi/prodam-ASgBAgICAUSUA9AQ?f=ASgBAQECAUSUA9AQAUDYCCTKWc5ZAUXAExh7ImZyb20iOm51bGwsInRvIjoxNDY1Mn0'
@@ -75,7 +74,7 @@ def get_session():
     session = requests.Session()
     session.headers = {
         'Host': 'www.avito.ru',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0)   Gecko/20100101 Firefox/69.0',
         'Accept': 'text/html',
         'Accept-Language': 'ru,en-US;q=0.5',
         'DNT': '1',
@@ -89,33 +88,37 @@ def get_session():
 def clean(text):
     return text.replace('\t', '').replace('\n', '').replace('\xa0', ' ').strip()
 
+
 def return_catalog(page_url):
     session = get_session()
     r = session.get(page_url)
-    print('I am sleeping')
 
 def get_page_data(page_url):
 
     session = get_session()
     r = session.get(page_url)
-    print(page_url)
+
     soup = BeautifulSoup(r.text, 'html.parser')
+
     table = soup.find('div', {"data-marker": "catalog-serp"})
     rows = table.find_all('div', {"data-marker": "item"})
+
     result = []
-    for index in range(len(rows)):
+    for index in range(2):
         row = rows[index]
         print('Parsing item# ' + str(index+1) + ' of ' + str(len(rows)))
-        value = random.random()
-        scaled_value = 1 + (value * (10 - 5))
+
+        scaled_value = random_value()
+
         avito_id = int(row.get('data-item-id'))
         name = clean(row.find('h3', {"class": "title-root-395AQ"}).text)
         price = int(clean(row.find('meta', {"itemprop": "price"}).get("content")))
         url = 'https://avito.ru' + row.find('a', {"class": "iva-item-sliderLink-2hFV_"}).get("href")
         address = clean(row.find('span', {"class": "geo-address-9QndR"}).text)
-        item = {'avito_id': avito_id, 'name': name, 'price': price, 'address': address, 'url': url,
-                'item-info': get_page_data_item(url)}
+        item = get_page_data_item(url)
+        #item = {'avito_id': avito_id, 'name': name, 'price': price, 'address': address, 'url': url, 'item-info':get_page_data_item(url)}
         print(url)
+
         return_catalog(page_url)
         result.append(item)
         time.sleep(scaled_value)
@@ -123,25 +126,30 @@ def get_page_data(page_url):
 
 
 def get_page_data_item(url):
-    time.sleep(5)
-    print('New Page')
     session = get_session()
     r = session.get(url)
+
     result = {}
     if r.status_code == 200:
 
         soup = BeautifulSoup(r.text, 'html.parser')
         item_page = soup.find('div', {"class": "item-view"})
-        # item_page_options = item_page.find_all('li',{"class":"item-params-list-item"})
-        # result_options = []
-        # for a in item_page_options:
-        # result_options.append(clean(a.text))
-        item_page_text = item_page.find('div', {"itemprop": "description"}).text
+        item_page_options = item_page.find_all('li',{"class":"item-params-list-item"})
+
+
         coordinatesX = item_page.find('div', {"class": "item-map-wrapper"}).get("data-map-lat")
         coordinatesY = item_page.find('div', {"class": "item-map-wrapper"}).get("data-map-lon")
+
         print(coordinatesX,coordinatesY)
+
+        result['avito_id'] = int(item_page.find('div', {"class": "item-map-wrapper"}).get("data-item-id"))
+        result['name'] = clean(item_page.find('span', {'itemprop': "name"}).text)
+        result['price'] = int(clean(item_page.find('span', {"itemprop": "price"}).get("content")))
         result['address'] = get_address_geo(coordinatesX, coordinatesY)
-        result['item_page_text'] = clean(item_page_text)
+        result['item_page_text'] = clean(item_page.find('div', {"itemprop": "description"}).text)
+        result['options'] =
+        result['url_page'] = url
+
         return result
     else:
         return result
@@ -161,6 +169,11 @@ def get_address_geo(coordinatesX, coordinatesY):
     # result['city'] = str(addreess_json.get('city'))
     return result
 
+def random_value():
+    value = random.random()
+    scaled_value = 1 + (value * (10 - 5))
+    return scaled_value
+
 
 def main(main_url):
 
@@ -174,13 +187,13 @@ def main(main_url):
         count_page = soup.find_all('span', {"class": "pagination-item-1WyVp"})[-2].text
         result = []
 
-        for i in range(1,int(count_page)):
+        for i in range(1):
 
-            value = random.random()
-            scaled_value = 1 + (value * (9 - 5))
-            print('Parsing page# ' + str(i) + ' of ' + count_page)
+            scaled_value = random_value()
+            print('Parsing page# ' + str(i+1) + ' of ' + count_page)
             # Для последующих страниц, пагинацию генерим
             page_url = main_url + '&pmax=3500000&pmin=2500000&p=' + str(i)
+            print('_____________________________________________')
             result += get_page_data(page_url)
             time.sleep(scaled_value)
 

@@ -203,4 +203,4 @@ def clean(text):
     return text.replace('\t', '').replace('\n', '').replace('\xa0', ' ').strip()
 
 if __name__ == '__main__':
-    main(main_url)
+    main(MAIN_URL)

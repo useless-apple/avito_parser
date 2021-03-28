@@ -40,7 +40,7 @@ def main(MAIN_URL):
         print(int(count_page))
         result = []
 
-        for i in range(int(count_page)):
+        for i in range(1):
 
             scaled_value = random_value()
             print('Parsing page# ' + str(i+1) + ' of ' + count_page)
@@ -67,10 +67,12 @@ def get_page_data(page_url):
         soup = BeautifulSoup(r.text, 'html.parser')
 
         table = soup.find('div', {"data-marker": "catalog-serp"})
+        if (table.find('div', {"data-marker": "witcher/block"})):
+            table.find('div', {"data-marker": "witcher/block"}).decompose()
         rows = table.find_all('div', {"data-marker": "item"})
 
         result = []
-        for index in range(len(rows)):
+        for index in range(1):
             row = rows[index]
             print('Parsing item# ' + str(index+1) + ' of ' + str(len(rows)))
 

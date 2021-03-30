@@ -72,7 +72,7 @@ def get_page_data(page_url):
         rows = table.find_all('div', {"data-marker": "item"})
 
         result = []
-        for index in range(1):
+        for index in range(5):
             row = rows[index]
             print('Parsing item# ' + str(index+1) + ' of ' + str(len(rows)))
 
@@ -112,7 +112,8 @@ def get_page_data_item(url):
         result['address'] = get_address_geo(coordinatesX, coordinatesY)
         result['item_page_text'] = clean(item_page.find('div', {"itemprop": "description"}).text)
         #result['options'] =
-        result['url_page'] = url
+        result['url'] = url
+        result['coordinates'] = {coordinatesX,coordinatesY}
 
         return result
     else:
@@ -125,7 +126,19 @@ def get_address_geo(coordinatesX, coordinatesY):
     soup = BeautifulSoup(r.text, 'html.parser')
 
     streetmap_json = json.loads(soup.text)
-    result = streetmap_json.get('address')
+    result = {}
+    result.update(streetmap_json.get('address'))
+
+    if (result.get('region')):
+        result.pop('region')
+    if (result.get('postcode')):
+        result.pop('postcode')
+    if (result.get('country')):
+        result.pop('country')
+    if (result.get('country_code')):
+        result.pop('country_code')
+
+    print(result)
 
     # result['house_number'] = str(addreess_json.get('house_number')) or 'Без номера'
     # result['road'] = str(addreess_json.get('road'))
@@ -162,7 +175,6 @@ def write_csv(result):
 # если делать по cron то путь к .db файлу должен быть полностью, иначе cron остановит скрипт.
 def write_sqlite3(result):
     print(result)
-    exit(0)
     conn = sqlite3.connect("avito_list.db")
     with conn:
         cur = conn.cursor()
@@ -172,12 +184,13 @@ def write_sqlite3(result):
             sql_price = result[i]['price']
             sql_address = result[i]['address']
             sql_url = result[i]['url']
+            sql_coordinates = result[i]['coordinates']
 
             cur.execute('SELECT avito_id FROM offers WHERE avito_id=?', (sql_avito_id,))
             item_id = cur.fetchall()
 
             if (item_id == [(sql_avito_id,)]):
-                print('ID found')
+                print('ID found ' + str(sql_avito_id))
                 cur.execute('SELECT price FROM offers WHERE avito_id=?', (sql_avito_id,))
                 item_price = cur.fetchall()
 
@@ -187,15 +200,14 @@ def write_sqlite3(result):
                 else:
                     # text_handler('Обновилась цена id ' + str(sql_avito_id) + '\n Старая цена = ' + str(item_price[0][0]) + ' руб. / Новая цена = ' + str(sql_price) + ' руб.\n\nСсылка ' + str(sql_url))
                     cur.execute("UPDATE offers SET price=? WHERE avito_id=?", (sql_price, sql_avito_id))
+                    cur.execute("UPDATE offers SET old_price=? WHERE avito_id=?", (item_price, sql_avito_id))
                     print('Price update')
                     time.sleep(5)
 
             else:
                 # text_handler('Новое объявление ' + str(sql_avito_id) + '\n\nЦена: '+ str(sql_price) + ' руб.' + '\n\nАдрес: ' + str(sql_address) + '\n\nСсылка ' + str(sql_url))
                 print('No ID ' + str(sql_avito_id))
-                cur.execute(
-                    "INSERT OR IGNORE INTO offers ('avito_id','name','price','address','url') VALUES (?,?,?,?,?)",
-                    (sql_avito_id, sql_name, sql_price, sql_address, sql_url))
+                cur.execute("INSERT OR IGNORE INTO offers ('avito_id','name','price','address','url','coordinates') VALUES (?,?,?,?,?,?)", (sql_avito_id, sql_name, sql_price, sql_address, sql_url, sql_coordinates))
                 print('New Offer')
                 time.sleep(5)
     conn.commit()
@@ -206,3 +218,4 @@ def clean(text):
 
 if __name__ == '__main__':
     main(MAIN_URL)
+    #get_address_geo('55.060114516533','55.060114516533')

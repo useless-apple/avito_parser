@@ -26,7 +26,7 @@ def write_csv(result):
                               ))
 
 def write_sqlite3(result):
-    conn = sqlite3.connect("/root/python/avito_parser/avito_list.db")
+    conn = sqlite3.connect("avito_list.db")
     with conn:
         cur = conn.cursor()
         cur.execute('UPDATE offers SET status=0')

@@ -128,3 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 /bot/settings.py
+/avito_database
+/avito_database.db
+/avito_parser.zip
+/data.json

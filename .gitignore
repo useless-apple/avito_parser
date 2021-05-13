@@ -127,4 +127,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-!/bot/settings.py
+/bot/settings.py

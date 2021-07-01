@@ -6,7 +6,6 @@ import sqlite3
 import cfscrape
 from datetime import datetime
 import json
-
 from bot.bot import text_handler
 
 emoji_top = u'\U0001F4C8'
@@ -30,14 +29,12 @@ def write_sqlite3(result):
                 sql_price = url[0][i]['price']
                 sql_address = url[0][i]['address']
                 sql_url = url[0][i]['url']
-
                 price_history = []
                 price_now = [str(datetime.utcnow()), str(sql_price)]
 
                 cur.execute('SELECT avito_id FROM offers WHERE avito_id=? AND city =?', (sql_avito_id, url[1][0]))
                 item_id = cur.fetchall()
                 if item_id == [(sql_avito_id,)]:
-
                     cur.execute('SELECT price FROM offers WHERE avito_id=? AND city =?', (sql_avito_id, url[1][0]))
                     item_price = cur.fetchall()
 
@@ -46,7 +43,6 @@ def write_sqlite3(result):
                     price_history = json.loads(cur.fetchall()[0][0])
                     price_history += price_now
                     price_history_dumps = json.dumps(price_history)
-
                     if (item_price == [(sql_price,)]):
                         # print('Price ok')
                         cur.execute("UPDATE offers SET status=1, updated_date=? WHERE avito_id=? AND city =?",
@@ -159,7 +155,6 @@ def main(main_url):
     for task in main_url:
         url_task = task[0]
         task = [task[1], task[2]]
-
         print(url_task)
         session = get_session()
         r = session.get(url_task + '&p=1')

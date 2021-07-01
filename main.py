@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-import csv
 import time
 import random
 import sqlite3
@@ -16,9 +15,11 @@ emoji_top_green = u'\U00002705'
 emoji_down = u'\U0001F4C9'
 emoji_down_red = u'\U0000274C'
 
+route_db = "avito_database.db"
+
 
 def write_sqlite3(result):
-    conn = sqlite3.connect("/root/python/avito_parser_general/avito_database.db")
+    conn = sqlite3.connect(route_db)
     for url in result:
         with conn:
             cur = conn.cursor()
@@ -40,7 +41,8 @@ def write_sqlite3(result):
                     cur.execute('SELECT price FROM offers WHERE avito_id=? AND city =?', (sql_avito_id, url[1][0]))
                     item_price = cur.fetchall()
 
-                    cur.execute('SELECT price_history FROM offers WHERE avito_id=? AND city =?', (sql_avito_id, url[1][0]))
+                    cur.execute('SELECT price_history FROM offers WHERE avito_id=? AND city =?',
+                                (sql_avito_id, url[1][0]))
                     price_history = json.loads(cur.fetchall()[0][0])
                     price_history += price_now
                     price_history_dumps = json.dumps(price_history)
@@ -52,7 +54,10 @@ def write_sqlite3(result):
                         continue
                     else:
                         if (item_price >= [(sql_price,)]):
-                            text_handler(url[1][1], 'Обновилась цена id ' + str(sql_avito_id) + '  ' + emoji_down + emoji_down + emoji_top_green + '\n Старая цена = ' + str(item_price[0][0]) + ' руб. / Новая цена = ' + str(sql_price) + ' руб.\n\nАдрес: ' + str(sql_address) + '\n\nСсылка ' + str(sql_url))
+                            text_handler(url[1][1], 'Обновилась цена id ' + str(
+                                sql_avito_id) + '  ' + emoji_down + emoji_down + emoji_top_green + '\n Старая цена = ' + str(
+                                item_price[0][0]) + ' руб. / Новая цена = ' + str(sql_price) + ' руб.\n\nАдрес: ' + str(
+                                sql_address) + '\n\nСсылка ' + str(sql_url))
                         else:
                             text_handler(url[1][1], 'Обновилась цена id ' + str(
                                 sql_avito_id) + '  ' + emoji_top + emoji_top + emoji_down_red + '\n Старая цена = ' + str(
@@ -62,20 +67,22 @@ def write_sqlite3(result):
                         cur.execute(
                             "UPDATE offers SET price=?, old_price=?, updated_date=?, price_history=?, status=1 WHERE avito_id=? AND city =?",
                             (
-                            sql_price, item_price[0][0], str(datetime.utcnow()), str(price_history_dumps), sql_avito_id,
-                            url[1][0]))
+                                sql_price, item_price[0][0], str(datetime.utcnow()), str(price_history_dumps),
+                                sql_avito_id,
+                                url[1][0]))
                         print('Price update')
                         time.sleep(5)
 
                 else:
-                    text_handler(url[1][1],'Новое объявление ' + str(sql_avito_id) + '\n\nЦена: ' + str(
+                    text_handler(url[1][1], 'Новое объявление ' + str(sql_avito_id) + '\n\nЦена: ' + str(
                         sql_price) + ' руб.' + '\n\nАдрес: ' + str(sql_address) + '\n\nСсылка ' + str(sql_url))
                     print('No ID -> New Offer')
 
                     price_history += price_now
                     price_history_dumps = json.dumps(price_history)
                     cur.execute(
-                        "INSERT OR IGNORE INTO offers ('avito_id','name','price','price_history','address','url','created_date','updated_date','status','city') VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        "INSERT OR IGNORE INTO offers ('avito_id','name','price','price_history','address','url',"
+                        "'created_date','updated_date','status','city') VALUES (?,?,?,?,?,?,?,?,?,?)",
                         (sql_avito_id, sql_name, sql_price, str(price_history_dumps), sql_address, sql_url,
                          str(datetime.utcnow()), str(datetime.utcnow()), 1, url[1][0]))
                     time.sleep(5)
@@ -85,7 +92,6 @@ def write_sqlite3(result):
 
 def get_session():
     session = requests.Session()
-    # session.proxies.update(proxy)
     session.headers = {
         'Host': 'www.avito.ru',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0)   Gecko/20100101 Firefox/69.0',
@@ -134,7 +140,7 @@ def get_page_data(page_url):
 
 
 def get_urls():
-    conn = sqlite3.connect("/root/python/avito_parser_general/avito_database.db")
+    conn = sqlite3.connect(route_db)
     with conn:
         cur = conn.cursor()
         cur.execute('SELECT name,city,chatid FROM urls')
@@ -184,7 +190,3 @@ if __name__ == '__main__':
     main_url = []
     main_url += get_urls()
     main(main_url)
-    # print(main_url)
-    # with open('data.json', encoding='utf-8', newline='') as json_file:
-    #     data = json.load(json_file)
-    #     write_sqlite3(data)

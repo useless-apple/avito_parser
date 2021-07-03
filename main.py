@@ -122,11 +122,26 @@ def get_page_data(page_url):
             rows = table.find_all('div', {"data-marker": "item"})
             result = []
             for row in rows:
-                avito_id = int(row.get('data-item-id'))
-                name = clean(row.find('h3', {"class": "title-root-395AQ"}).text)
-                price = int(clean(row.find('meta', {"itemprop": "price"}).get("content")))
-                url = 'https://avito.ru' + row.find('a', {"class": "iva-item-sliderLink-2hFV_"}).get("href")
-                address = clean(row.find('span', {"class": "geo-address-9QndR"}).text)
+                try:
+                    avito_id = int(row.get('data-item-id'))
+                except:
+                    avito_id = 0
+                try:
+                    name = clean(row.find('h3', {"itemprop": "name"}).text)
+                except:
+                    name = ''
+                try:
+                    price = int(clean(row.find('meta', {"itemprop": "price"}).get("content")))
+                except:
+                    price = 0
+                try:
+                    url = 'https://avito.ru' + row.find('a', {"itemprop": "url"}).get("href")
+                except:
+                    url = ''
+                try:
+                    address = clean(row.find('span', {"class": "geo-address-9QndR"}).text)
+                except:
+                    address = ''
                 item = {'avito_id': avito_id, 'name': name, 'price': price, 'address': address, 'url': url, }
                 result.append(item)
     else:

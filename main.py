@@ -37,7 +37,6 @@ def write_sqlite3(result):
                 cur.execute('SELECT avito_id FROM offers WHERE avito_id=? AND city =?', (sql_avito_id, url[1][0]))
                 item_id = cur.fetchall()
                 if item_id == [(sql_avito_id,)]:
-
                     cur.execute('SELECT price FROM offers WHERE avito_id=? AND city =?', (sql_avito_id, url[1][0]))
                     item_price = cur.fetchall()
 
@@ -46,7 +45,10 @@ def write_sqlite3(result):
                     price_history = json.loads(cur.fetchall()[0][0])
                     price_history += price_now
                     price_history_dumps = json.dumps(price_history)
-
+                    price_history_srt = ''
+                    if len(price_history)>0:
+                        for i in range(0, len(price_history),2):
+                            price_history_srt = price_history_srt + 'Дата: ' +price_history[i][0:10] + '  Цена:' + price_history[i+1] + ' руб.\n'
                     if (item_price == [(sql_price,)]):
                         # print('Price ok')
                         cur.execute("UPDATE offers SET status=1, updated_date=? WHERE avito_id=? AND city =?",
@@ -56,12 +58,12 @@ def write_sqlite3(result):
                         if (item_price >= [(sql_price,)]):
                             text_handler(url[1][1], 'Обновилась цена id ' + str(
                                 sql_avito_id) + '  ' + emoji_down + emoji_down + emoji_top_green + '\n Старая цена = ' + str(
-                                item_price[0][0]) + ' руб. / Новая цена = ' + str(sql_price) + ' руб.\n\nАдрес: ' + str(
+                                item_price[0][0]) + ' руб. / Новая цена = ' + str(sql_price) + ' руб.\n\nИзменения цен \n' +str(price_history_srt) +'\n\nАдрес: ' + str(
                                 sql_address) + '\n\nСсылка ' + str(sql_url))
                         else:
                             text_handler(url[1][1], 'Обновилась цена id ' + str(
                                 sql_avito_id) + '  ' + emoji_top + emoji_top + emoji_down_red + '\n Старая цена = ' + str(
-                                item_price[0][0]) + ' руб. / Новая цена = ' + str(sql_price) + ' руб.\n\nАдрес: ' + str(
+                                item_price[0][0]) + ' руб. / Новая цена = ' + str(sql_price) + ' руб.\n\nИзменения цен \n' +str(price_history_srt) +'\n\nАдрес: ' + str(
                                 sql_address) + '\n\nСсылка ' + str(sql_url))
 
                         cur.execute(
@@ -81,8 +83,7 @@ def write_sqlite3(result):
                     price_history += price_now
                     price_history_dumps = json.dumps(price_history)
                     cur.execute(
-                        "INSERT OR IGNORE INTO offers ('avito_id','name','price','price_history','address','url',"
-                        "'created_date','updated_date','status','city') VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        "INSERT OR IGNORE INTO offers ('avito_id','name','price','price_history','address','url','created_date','updated_date','status','city') VALUES (?,?,?,?,?,?,?,?,?,?)",
                         (sql_avito_id, sql_name, sql_price, str(price_history_dumps), sql_address, sql_url,
                          str(datetime.utcnow()), str(datetime.utcnow()), 1, url[1][0]))
                     time.sleep(5)
@@ -113,6 +114,7 @@ def get_page_data(page_url):
     session = get_session()
     r = session.get(page_url)
     if r.status_code == 200:
+        time.sleep(1)
         soup = BeautifulSoup(r.text, 'html.parser')
         table = soup.find('div', {"data-marker": "catalog-serp"})
         if table:
@@ -126,11 +128,31 @@ def get_page_data(page_url):
             rows = table.find_all('div', {"data-marker": "item"})
             result = []
             for row in rows:
-                avito_id = int(row.get('data-item-id'))
-                name = clean(row.find('h3', {"class": "title-root-395AQ"}).text)
-                price = int(clean(row.find('meta', {"itemprop": "price"}).get("content")))
-                url = 'https://avito.ru' + row.find('a', {"class": "iva-item-sliderLink-2hFV_"}).get("href")
-                address = clean(row.find('span', {"class": "geo-address-9QndR"}).text)
+                try:
+                    avito_id = int(row.get('data-item-id'))
+                except:
+                    avito_id = 'Не найден'
+
+                try:
+                    name = clean(row.find('h3', {"itemprop": "name"}).text)
+                except:
+                    name = 'Не найден'
+
+                try:
+                    price = int(clean(row.find('meta', {"itemprop": "price"}).get("content")))
+                except:
+                    price = 'Не найден'
+
+                try:
+                    url = 'https://avito.ru' + row.find('a', {"itemprop": "url"}).get("href")
+                except:
+                    url = 'Не найден'
+
+                try:
+                    address = clean(row.find('div', {"data-marker": "item-address"}).div.span.span.text)
+                except:
+                    address = 'Не найден'
+
                 item = {'avito_id': avito_id, 'name': name, 'price': price, 'address': address, 'url': url, }
                 result.append(item)
     else:
@@ -140,7 +162,7 @@ def get_page_data(page_url):
 
 
 def get_urls():
-    conn = sqlite3.connect(route_db)
+    conn = sqlite3.connect("/root/python/avito_parser_general/avito_database.db")
     with conn:
         cur = conn.cursor()
         cur.execute('SELECT name,city,chatid FROM urls')
@@ -165,7 +187,14 @@ def main(main_url):
         r = session.get(url_task + '&p=1')
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, 'html.parser')
-            count_page = soup.find_all('span', {"class": "pagination-item-1WyVp"})[-2].text
+            try:
+                pagination = soup.find('div', {"data-marker": "pagination-button"})
+                pagination.find('span', {"data-marker": "pagination-button/prev"}).decompose()
+                pagination.find('span', {"data-marker": "pagination-button/next"}).decompose()
+                count_page = pagination.find_all('span')[-1].text
+            except:
+                count_page = 1
+                print('Error pagination')
             result = []
             for i in range(1, int(count_page) + 1):
                 value = random.random()
@@ -190,3 +219,7 @@ if __name__ == '__main__':
     main_url = []
     main_url += get_urls()
     main(main_url)
+    # print(main_url)
+    #with open('data_one.json', encoding='utf-8', newline='') as json_file:
+         #data = json.load(json_file)
+         #write_sqlite3(data)

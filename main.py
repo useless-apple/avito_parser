@@ -6,7 +6,6 @@ import sqlite3
 import cfscrape
 from datetime import datetime
 import json
-
 from bot.bot import text_handler
 
 emoji_top = u'\U0001F4C8'
@@ -30,7 +29,6 @@ def write_sqlite3(result):
                 sql_price = url[0][i]['price']
                 sql_address = url[0][i]['address']
                 sql_url = url[0][i]['url']
-
                 price_history = []
                 price_now = [str(datetime.utcnow()), str(sql_price)]
 
@@ -131,28 +129,23 @@ def get_page_data(page_url):
                 try:
                     avito_id = int(row.get('data-item-id'))
                 except:
-                    avito_id = 'Не найден'
-
+                    avito_id = 0
                 try:
                     name = clean(row.find('h3', {"itemprop": "name"}).text)
                 except:
-                    name = 'Не найден'
-
+                    name = ''
                 try:
                     price = int(clean(row.find('meta', {"itemprop": "price"}).get("content")))
                 except:
-                    price = 'Не найден'
-
+                    price = 0
                 try:
                     url = 'https://avito.ru' + row.find('a', {"itemprop": "url"}).get("href")
                 except:
-                    url = 'Не найден'
-
+                    url = ''
                 try:
-                    address = clean(row.find('div', {"data-marker": "item-address"}).div.span.span.text)
+                    address = clean(row.find('span', {"class": "geo-address-9QndR"}).text)
                 except:
-                    address = 'Не найден'
-
+                    address = ''
                 item = {'avito_id': avito_id, 'name': name, 'price': price, 'address': address, 'url': url, }
                 result.append(item)
     else:
@@ -181,7 +174,6 @@ def main(main_url):
     for task in main_url:
         url_task = task[0]
         task = [task[1], task[2]]
-
         print(url_task)
         session = get_session()
         r = session.get(url_task + '&p=1')

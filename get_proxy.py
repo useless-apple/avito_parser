@@ -6,11 +6,10 @@ from requests import get
 from bs4 import BeautifulSoup
 from requests.exceptions import ProxyError, ReadTimeout, SSLError, ConnectionError
 
-from main import write_json_txt, route_db
 
 ip_list = []
-url = 'https://www.avito.ru/orenburg/doma_dachi_kottedzhi/prodam-ASgBAgICAUSUA9AQ?f=ASgBAQECAUSUA9AQAUDYCCTKWc5ZAUXAExh7ImZyb20iOm51bGwsInRvIjoxNDY0OH0&pmax=3500000&pmin=2500000'
 
+route_db = "avito_database.db"
 
 # Получает прокси
 def get_proxy():
@@ -23,7 +22,6 @@ def get_proxy():
         port = element.find_all("td")[1].text
         proxy = "http://{}:{}".format(ip, port)
         ip_list.append(proxy)
-    write_json_txt(ip_list)
     write_sqlite3_proxy(ip_list)
 
 def write_sqlite3_proxy(ip_list):
@@ -56,13 +54,14 @@ def get_ip_db():
 def delete_ip_db(ip):
     conn = sqlite3.connect(route_db)
     cur = conn.cursor()
+    print(ip)
     cur.execute('DELETE FROM proxy WHERE ip=?', (ip, ))
     conn.commit()
     conn.close()
 
 
 # Продбирает proxy
-def get_html(url):
+def get_html1(url):
     headers = {
         'Host': 'www.avito.ru',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0)   Gecko/20100101 Firefox/69.0',
@@ -74,37 +73,34 @@ def get_html(url):
         'Pragma': 'no-cache',
         'Cache-Control': 'no-cache'}
     ip_list = get_ip_db()
+    print(ip_list)
     if len(ip_list) <= 0:
         print(len(ip_list))
         get_proxy()
-        get_ip_db()
+        ip_list = get_ip_db()
     for ip in ip_list:
-        print(ip)
         try:
+            print('Trying: ' + ip[0])
             html = response_sucsess(url, ip[0], headers)
             if html is not None: return html
         except (ProxyError, ConnectionError, ReadTimeout, SSLError):
-            ip_list.pop(ip_list.index(ip))
             delete_ip_db(ip[0])
-            print('delete')
+            print('Delete proxy error: ' + ip[0])
             continue
 
 
 def response_sucsess(url, ip, headers):
+    print('response ip ' + ip)
     r = get(url, proxies={"https": ip}, headers=headers, timeout=7)
     if r.status_code == 200:
         if len(r.text) > 80000:
-            print(r.text)
-            return r.text
+            print('IP Success')
+            return r
         else:
-            delete_ip_db(ip[0])
-            print('delete')
+            delete_ip_db(ip)
+            print('Delete (len not enough: ' + ip)
     else:
-        delete_ip_db(ip[0])
-        print('delete')
+        delete_ip_db(ip)
+        print('Delete status cote not 200: ' + ip)
 
 
-
-if __name__ == '__main__':
-    #get_proxy()
-    get_html(url)

@@ -7,6 +7,7 @@ import cfscrape
 from datetime import datetime
 import json
 from bot.bot import text_handler
+from get_proxy import get_html1
 
 emoji_top = u'\U0001F4C8'
 emoji_top_green = u'\U00002705'
@@ -106,8 +107,7 @@ def clean(text):
 
 
 def get_page_data(page_url):
-    session = get_session()
-    r = session.get(page_url)
+    r = get_html1(page_url)
     if r.status_code == 200:
         soup = BeautifulSoup(r.text, 'html.parser')
         table = soup.find('div', {"data-marker": "catalog-serp"})
@@ -171,11 +171,14 @@ def main(main_url):
         url_task = task[0]
         task = [task[1], task[2]]
         print(url_task)
-        session = get_session()
-        r = session.get(url_task + '&p=1')
+        r = get_html1(url_task + '&p=1')
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, 'html.parser')
-            count_page = soup.find_all('span', {"class": "pagination-item-1WyVp"})[-2].text
+            try:
+                count_page = soup.find_all('span', {"class": "pagination-item-1WyVp"})[-2].text or soup.find_all('span', {"class": "pagination-item-22viK"})[-2].text
+            except:
+                print(soup)
+                exit()
             result = []
             for i in range(1, int(count_page) + 1):
                 value = random.random()

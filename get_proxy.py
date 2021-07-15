@@ -6,10 +6,10 @@ from requests import get
 from bs4 import BeautifulSoup
 from requests.exceptions import ProxyError, ReadTimeout, SSLError, ConnectionError
 
+from settings import route_db
 
 ip_list = []
 
-route_db = "avito_database.db"
 
 # Получает прокси
 def get_proxy():
@@ -24,17 +24,18 @@ def get_proxy():
         ip_list.append(proxy)
     write_sqlite3_proxy(ip_list)
 
+
 def write_sqlite3_proxy(ip_list):
     conn = sqlite3.connect(route_db)
     for ip in ip_list:
         cur = conn.cursor()
-        cur.execute('SELECT * FROM proxy WHERE ip=?', (ip, ))
+        cur.execute('SELECT * FROM proxy WHERE ip=?', (ip,))
         ip_sql = cur.fetchall()
-        if len(ip_sql)>0:
+        if len(ip_sql) > 0:
             if ip != ip_sql[0][1]:
                 cur.execute(
                     "INSERT OR IGNORE INTO proxy ('ip') VALUES (?)",
-                    (ip, ))
+                    (ip,))
         else:
             cur.execute(
                 "INSERT OR IGNORE INTO proxy ('ip') VALUES (?)",
@@ -42,26 +43,31 @@ def write_sqlite3_proxy(ip_list):
     conn.commit()
     conn.close()
 
+
 def get_ip_db():
     conn = sqlite3.connect(route_db)
     cur = conn.cursor()
-    cur.execute('SELECT ip FROM proxy')
-    ip_list = cur.fetchall()
+    cur.execute('SELECT ip FROM proxy ORDER BY ROWID ASC LIMIT 1')
+    ip = cur.fetchall()
     conn.commit()
     conn.close()
-    return ip_list
+    if len(ip) == 0:
+        get_proxy()
+        ip = get_ip_db()
+    return ip[0]
+
 
 def delete_ip_db(ip):
     conn = sqlite3.connect(route_db)
     cur = conn.cursor()
-    print(ip)
-    cur.execute('DELETE FROM proxy WHERE ip=?', (ip, ))
+    cur.execute('DELETE FROM proxy WHERE ip=?', (ip,))
+    print()
     conn.commit()
     conn.close()
 
 
 # Продбирает proxy
-def get_html1(url):
+def get_html(url):
     headers = {
         'Host': 'www.avito.ru',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0)   Gecko/20100101 Firefox/69.0',
@@ -72,35 +78,30 @@ def get_html1(url):
         'Upgrade-Insecure-Requests': '1',
         'Pragma': 'no-cache',
         'Cache-Control': 'no-cache'}
-    ip_list = get_ip_db()
-    print(ip_list)
-    if len(ip_list) <= 0:
-        print(len(ip_list))
-        get_proxy()
-        ip_list = get_ip_db()
-    for ip in ip_list:
+    proxy_success = False
+    while proxy_success == False:
+        ip = get_ip_db()
+        print('Получили IP: ' + ip[0])
         try:
             print('Trying: ' + ip[0])
             html = response_sucsess(url, ip[0], headers)
-            if html is not None: return html
+            if html is not None: return html[0]
         except (ProxyError, ConnectionError, ReadTimeout, SSLError):
-            delete_ip_db(ip[0])
             print('Delete proxy error: ' + ip[0])
-            continue
+            delete_ip_db(ip[0])
 
 
 def response_sucsess(url, ip, headers):
-    print('response ip ' + ip)
     r = get(url, proxies={"https": ip}, headers=headers, timeout=7)
     if r.status_code == 200:
         if len(r.text) > 80000:
             print('IP Success')
-            return r
+            proxy_success = True
+            return r, proxy_success
         else:
-            delete_ip_db(ip)
             print('Delete (len not enough: ' + ip)
+            delete_ip_db(ip)
+
     else:
-        delete_ip_db(ip)
         print('Delete status cote not 200: ' + ip)
-
-
+        delete_ip_db(ip)

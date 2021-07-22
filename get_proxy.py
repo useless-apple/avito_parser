@@ -2,6 +2,8 @@
 import sqlite3
 
 import requests
+
+
 from requests import get
 from bs4 import BeautifulSoup
 from requests.exceptions import ProxyError, ReadTimeout, SSLError, ConnectionError
@@ -92,7 +94,7 @@ def get_html(url):
 
 
 def response_sucsess(url, ip, headers):
-    r = get(url, proxies={"https": ip}, headers=headers, timeout=7)
+    r = get(url, proxies={"https": ip}, headers=headers)
     if r.status_code == 200:
         if len(r.text) > 80000:
             print('IP Success')

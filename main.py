@@ -48,6 +48,7 @@ def write_sqlite3(result):
 
                     if len(price_history) > 0:
                         for i in range(0, len(price_history), 2):
+                            print(price_history)
                             if i != 0 and i != 1:
                                 if price_history[i + 1] > price_history[i - 1]:
                                     percent_price_history = '+ ' + str(round(
@@ -244,10 +245,10 @@ def main(main_url):
 
 
 if __name__ == '__main__':
-    # main_url = []
-    # main_url += get_urls()
-    # main(main_url)
-    # print(main_url)
-    with open('data.json', encoding='utf-8', newline='') as json_file:
-        data = json.load(json_file)
-        write_sqlite3(data)
+    main_url = []
+    main_url += get_urls()
+    main(main_url)
+    print(main_url)
+    # with open('data.json', encoding='utf-8', newline='') as json_file:
+    #     data = json.load(json_file)
+    #     write_sqlite3(data)

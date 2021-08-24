@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-import csv
 import time
 import random
 import sqlite3
@@ -8,6 +7,7 @@ import cfscrape
 from datetime import datetime
 import json
 
+from settings import route_db
 from bot.bot import text_handler
 
 emoji_top = u'\U0001F4C8'
@@ -22,7 +22,7 @@ def num_conversion(a):
 
 
 def write_sqlite3(result):
-    conn = sqlite3.connect("avito_database.db")
+    conn = sqlite3.connect(route_db)
     for url in result:
         with conn:
             cur = conn.cursor()
@@ -195,7 +195,7 @@ def get_page_data(page_url):
 
 
 def get_urls():
-    conn = sqlite3.connect("avito_database.db")
+    conn = sqlite3.connect(route_db)
     with conn:
         cur = conn.cursor()
         cur.execute('SELECT name,city,chatid FROM urls')
@@ -252,7 +252,6 @@ if __name__ == '__main__':
     main_url = []
     main_url += get_urls()
     main(main_url)
-    print(main_url)
     # with open('data.json', encoding='utf-8', newline='') as json_file:
     #     data = json.load(json_file)
     #     write_sqlite3(data)

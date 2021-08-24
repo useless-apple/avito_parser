@@ -1,6 +1,6 @@
 import telebot
 
-from bot.settings import TG_TOKEN
+from settings import TG_TOKEN
 
 #Токен Вашего бота телеграм
 TOKEN = TG_TOKEN

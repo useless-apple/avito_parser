@@ -17,6 +17,10 @@ emoji_down = u'\U0001F4C9'
 emoji_down_red = u'\U0000274C'
 
 
+def num_conversion(a):
+    return '{:,}'.format(int(a))
+
+
 def write_sqlite3(result):
     conn = sqlite3.connect("avito_database.db")
     for url in result:
@@ -48,7 +52,6 @@ def write_sqlite3(result):
 
                     if len(price_history) > 0:
                         for i in range(0, len(price_history), 2):
-                            print(price_history)
                             if i != 0 and i != 1:
                                 if price_history[i + 1] > price_history[i - 1]:
                                     percent_price_history = '+ ' + str(round(
@@ -59,18 +62,19 @@ def write_sqlite3(result):
                                     percent_price_history = '- ' + str(round(((int(price_history[i - 1]) - int(
                                         price_history[i + 1])) / int(price_history[i + 1])) * 100, 2))
 
-                                price_history_srt = price_history_srt + 'Дата: ' + price_history[i][0:10] + '  Цена:' + \
-                                                    price_history[i + 1] + ' руб.  (' + percent_price_history + '%)\n'
+                                price_history_srt = price_history_srt + 'Дата: ' + price_history[i][0:10] + '  Цена: ' + \
+                                                    num_conversion(price_history[
+                                                                       i + 1]) + ' руб.  (' + percent_price_history + '%)\n'
                             else:
-                                price_history_srt = price_history_srt + 'Дата: ' + price_history[i][0:10] + '  Цена:' + \
-                                                    price_history[i + 1] + ' руб.\n'
+                                price_history_srt = price_history_srt + 'Дата: ' + price_history[i][0:10] + '  Цена: ' + \
+                                                    num_conversion(price_history[i + 1]) + ' руб.\n'
 
                         if price_history[1] > price_now[1]:
-                            difference_price = '- ' + str(int(price_history[1]) - int(price_now[1]))
+                            difference_price = '- ' + str(num_conversion(int(price_history[1]) - int(price_now[1])))
                             percent_difference_price = '- ' + str(
                                 round(((int(price_history[1]) - int(price_now[1])) / int(price_now[1])) * 100, 2))
                         else:
-                            difference_price = '+ ' + str(int(price_now[1]) - int(price_history[1]))
+                            difference_price = '+ ' + str(num_conversion(int(price_now[1]) - int(price_history[1])))
                             percent_difference_price = '+ ' + str(
                                 round(((int(price_now[1]) - int(price_history[1])) / int(price_history[1])) * 100, 2))
 
@@ -83,15 +87,15 @@ def write_sqlite3(result):
                         if (item_price >= [(sql_price,)]):
                             text_handler(url[1][1], 'Обновилась цена id ' + str(
                                 sql_avito_id) + '  ' + emoji_down + emoji_down + emoji_top_green + '\n Старая цена = ' + str(
-                                item_price[0][0]) + ' руб. / Новая цена = ' + str(
-                                sql_price) + ' руб.\n\nИзменения цен \n' + str(
-                                price_history_srt) + '\nРазница: ' + difference_price + ' (' + percent_difference_price + '%)\nАдрес: ' + str(
+                                num_conversion(item_price[0][0])) + ' руб. / Новая цена = ' + str(num_conversion(
+                                sql_price)) + ' руб.\n\nИзменения цен \n' + str(
+                                price_history_srt) + '\nРазница: ' + difference_price + ' (' + percent_difference_price + '%)\n\nАдрес: ' + str(
                                 sql_address) + '\n\nСсылка ' + str(sql_url))
                         else:
                             text_handler(url[1][1], 'Обновилась цена id ' + str(
                                 sql_avito_id) + '  ' + emoji_top + emoji_top + emoji_down_red + '\n Старая цена = ' + str(
-                                item_price[0][0]) + ' руб. / Новая цена = ' + str(
-                                sql_price) + ' руб.\n\nИзменения цен \n' + str(
+                                num_conversion(item_price[0][0])) + ' руб. / Новая цена = ' + str(num_conversion(
+                                sql_price)) + ' руб.\n\nИзменения цен \n' + str(
                                 price_history_srt) + '\nРазница: ' + difference_price + ' (' + percent_difference_price + '%)\n\nАдрес: ' + str(
                                 sql_address) + '\n\nСсылка ' + str(sql_url))
 

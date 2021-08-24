@@ -132,3 +132,4 @@ dmypy.json
 /avito_database.db
 /avito_parser.zip
 /data.json
+/settings.py

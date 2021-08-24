@@ -49,7 +49,6 @@ def write_sqlite3(result):
                     price_history += price_now
                     price_history_dumps = json.dumps(price_history)
                     price_history_srt = ''
-
                     if len(price_history) > 0:
                         for i in range(0, len(price_history), 2):
                             if i != 0 and i != 1:
@@ -195,7 +194,7 @@ def get_page_data(page_url):
 
 
 def get_urls():
-    conn = sqlite3.connect(route_db)
+    conn = sqlite3.connect("/root/python/avito_parser_general/avito_database.db")
     with conn:
         cur = conn.cursor()
         cur.execute('SELECT name,city,chatid FROM urls')

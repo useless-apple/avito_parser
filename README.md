@@ -6,7 +6,8 @@
 
 ## Установка
 
-Указываем ссылки в avito_parser.db таблица url (ссылка, город, ID чата телеграм)
-Указываем токен бота в (TG_TOKEN) /settings.py
-Указываем путь до БД (route_db) /settings.py
-Установить библиотеки (под linux) > `pip install -r -f PipInstaller.txt`
+
+Указываем ссылки в avito_parser.db таблица url (ссылка, город, ID чата телеграм)<br>
+Указываем токен бота в (TG_TOKEN) /settings.py<br>
+Указываем путь до БД (route_db) /settings.py<br>
+Установить библиотеки (под linux) > `pip install -r -f PipInstaller.txt`<br>

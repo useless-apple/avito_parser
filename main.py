@@ -194,7 +194,7 @@ def get_page_data(page_url):
 
 
 def get_urls():
-    conn = sqlite3.connect("/root/python/avito_parser_general/avito_database.db")
+    conn = sqlite3.connect(route_db)
     with conn:
         cur = conn.cursor()
         cur.execute('SELECT name,city,chatid FROM urls')

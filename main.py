@@ -132,9 +132,9 @@ def main(main_url):
 
 
 if __name__ == '__main__':
-    # main_url = []
-    # main_url += get_urls()
-    # main(main_url)
-    with open('data.json', encoding='utf-8', newline='') as json_file:
-        data = json.load(json_file)
-        write_sqlite3(data)
+    main_url = []
+    main_url += get_urls()
+    main(main_url)
+    # with open('data.json', encoding='utf-8', newline='') as json_file:
+    #     data = json.load(json_file)
+    #     write_sqlite3(data)

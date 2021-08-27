@@ -5,7 +5,7 @@ import random
 import cfscrape
 import json
 import logging
-from date_and_time import get_date_time
+from date_and_time import get_date_time, get_date_time_log
 
 from bot.bot import text_handler
 from settings import exception_chat
@@ -14,7 +14,7 @@ from text_converter import clean
 
 date_and_time = get_date_time()
 
-logging.basicConfig(filename="logging.log", level=logging.INFO, format= '[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',)
+logging.basicConfig(filename="logs/log-{}.log".format(get_date_time_log()), level=logging.INFO, format= '[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',)
 log = logging.getLogger("ex")
 
 def get_session():

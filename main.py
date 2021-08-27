@@ -105,8 +105,8 @@ def get_page_data(page_url):
     return result
 
 
-def write_json_txt(result):
-    with open('data.json', 'w', encoding='utf-8') as f:
+def write_json_txt(result, file):
+    with open(file, 'w', encoding='utf-8') as f:
         json.dump(result, f, ensure_ascii=False, indent=4)
 
 
@@ -149,7 +149,7 @@ def main(main_url):
             text_handler(exception_chat, error_message)
             print('Error: ' + str(r.status_code))
 
-    write_json_txt(global_result)
+    write_json_txt(global_result, 'data.json')
     write_sqlite3(global_result)
 
 

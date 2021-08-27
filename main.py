@@ -4,6 +4,7 @@ import time
 import random
 import cfscrape
 import json
+import logging
 from date_and_time import get_date_time
 
 from bot.bot import text_handler
@@ -13,6 +14,8 @@ from text_converter import clean
 
 date_and_time = get_date_time()
 
+logging.basicConfig(filename="logging.log", level=logging.INFO, format= '[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',)
+log = logging.getLogger("ex")
 
 def get_session():
     session = requests.Session()
@@ -90,6 +93,7 @@ def get_page_data(page_url):
                 table.find('div', {"data-marker": "witcher/block"}).decompose()
         if not table:
             error_message = 'Error not table' + str(soup) + str(table)
+            logging.error(error_message)
             text_handler(exception_chat, error_message)
             print(soup)
             print(table)
@@ -100,6 +104,7 @@ def get_page_data(page_url):
     else:
         error_message = 'Error not table' + str(r.status_code)
         text_handler(exception_chat, error_message)
+        logging.error('Error:' + str(r.status_code))
         print('Error:' + str(r.status_code))
         result = []
     return result
@@ -111,11 +116,13 @@ def write_json_txt(result, file):
 
 
 def main(main_url):
+    log.info('Starting parsing ' + str(date_and_time))
     print(str(date_and_time))
     global_result = []
     for task in main_url:
         url_task = task[1]
         task = [task[2], task[3], task[0]]
+        log.info('Url parsing ' + str(url_task))
         print(url_task)
         session = get_session()
         r = session.get(url_task + '&p=1')
@@ -130,11 +137,12 @@ def main(main_url):
                 count_page = 1
                 error_message = 'Error pagination'
                 text_handler(exception_chat, error_message)
-                print('Error pagination')
+                logging.error('Error pagination')
             result = []
             for i in range(1, int(count_page) + 1):
                 value = random.random()
                 scaled_value = 4 + (value * (11 - 5))
+                log.info('Parsing page# ' + str(i) + ' of ' + count_page)
                 print('Parsing page# ' + str(i) + ' of ' + count_page)
                 page_url = url_task + '&p=' + str(i)
                 result += get_page_data(page_url)
@@ -143,20 +151,27 @@ def main(main_url):
             scaled_value = 4 + (value * (11 - 5))
             time.sleep(scaled_value)
             item = [result, task]
+            write_sqlite3(item)
             global_result.append(item)
         else:
             error_message = 'Error: ' + str(r.status_code)
             text_handler(exception_chat, error_message)
+            logging.error(error_message)
             print('Error: ' + str(r.status_code))
 
     write_json_txt(global_result, 'data.json')
-    write_sqlite3(global_result)
+    log.info('Parsing Success')
+    print('Parsing Success')
+    #write_sqlite3(global_result)
 
 
 if __name__ == '__main__':
-    main_url = []
-    main_url += get_urls()
-    main(main_url)
-    # with open('data.json', encoding='utf-8', newline='') as json_file:
-    #     data = json.load(json_file)
-    #     write_sqlite3(data)
+    try:
+        main_url = []
+        main_url += get_urls()
+        main(main_url)
+        # with open('data_item.json', encoding='utf-8', newline='') as json_file:
+        #     data = json.load(json_file)
+        #     write_sqlite3(data)
+    except Exception as e:
+        log.exception(str(e))

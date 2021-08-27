@@ -4,12 +4,14 @@ import time
 import random
 import cfscrape
 import json
-from datetime import datetime
+from date_and_time import get_date_time
 
 from bot.bot import text_handler
 from settings import exception_chat
 from sqlite import write_sqlite3, get_urls
 from text_converter import clean
+
+date_and_time = get_date_time()
 
 
 def get_session():
@@ -27,12 +29,61 @@ def get_session():
     return cfscrape.create_scraper(sess=session)
 
 
+def get_item_data(rows, type_of):
+    result = []
+    for row in rows:
+        try:
+            avito_id = int(row.get('data-item-id'))
+        except:
+            avito_id = 'Не найден'
+
+        try:
+            name = clean(row.find('h3', {"itemprop": "name"}).text)
+        except:
+            name = 'Не найден'
+
+        try:
+            price = int(clean(row.find('meta', {"itemprop": "price"}).get("content")))
+        except:
+            price = 'Не найден'
+
+        try:
+            url = 'https://avito.ru' + row.find('a', {"itemprop": "url"}).get("href")
+        except:
+            url = 'Не найден'
+
+        if type_of == 'Недвижимость':
+            try:
+                address = clean(row.find('div', {"data-marker": "item-address"}).div.span.span.text)
+            except:
+                address = 'Не найден'
+        else:
+            address = 'None'
+
+        if type_of == 'Транспорт':
+            try:
+                params = clean(row.find('div', {"data-marker": "item-specific-params"}).text)
+            except:
+                params = 'Не найден'
+        else:
+            params = 'None'
+        item = {'avito_id': avito_id, 'name': name, 'price': price, 'address': address, 'url': url, 'type_of': type_of,
+                'params': params}
+        result.append(item)
+    return result
+
+
 def get_page_data(page_url):
     session = get_session()
     r = session.get(page_url)
     if r.status_code == 200:
         time.sleep(1)
         soup = BeautifulSoup(r.text, 'html.parser')
+        try:
+            type_of = soup.find('div', {"data-marker": "breadcrumbs"}).find_all('span', {"itemprop": "itemListElement"})[
+                1].find('a').text
+        except:
+            type_of = 'None Type'
         table = soup.find('div', {"data-marker": "catalog-serp"})
         if table:
             if table.find('div', {"data-marker": "witcher/block"}):
@@ -45,35 +96,7 @@ def get_page_data(page_url):
             result = []
         else:
             rows = table.find_all('div', {"data-marker": "item"})
-            result = []
-            for row in rows:
-                try:
-                    avito_id = int(row.get('data-item-id'))
-                except:
-                    avito_id = 'Не найден'
-
-                try:
-                    name = clean(row.find('h3', {"itemprop": "name"}).text)
-                except:
-                    name = 'Не найден'
-
-                try:
-                    price = int(clean(row.find('meta', {"itemprop": "price"}).get("content")))
-                except:
-                    price = 'Не найден'
-
-                try:
-                    url = 'https://avito.ru' + row.find('a', {"itemprop": "url"}).get("href")
-                except:
-                    url = 'Не найден'
-
-                try:
-                    address = clean(row.find('div', {"data-marker": "item-address"}).div.span.span.text)
-                except:
-                    address = 'Не найден'
-
-                item = {'avito_id': avito_id, 'name': name, 'price': price, 'address': address, 'url': url, }
-                result.append(item)
+            result = get_item_data(rows, type_of)
     else:
         error_message = 'Error not table' + str(r.status_code)
         text_handler(exception_chat, error_message)
@@ -88,12 +111,11 @@ def write_json_txt(result):
 
 
 def main(main_url):
-    print(str(datetime.utcnow()))
+    print(str(date_and_time))
     global_result = []
     for task in main_url:
-        url_task = task[0]
-        task = [task[1], task[2]]
-
+        url_task = task[1]
+        task = [task[2], task[3], task[0]]
         print(url_task)
         session = get_session()
         r = session.get(url_task + '&p=1')
@@ -123,9 +145,9 @@ def main(main_url):
             item = [result, task]
             global_result.append(item)
         else:
-            error_message = 'Error not table' + str(r.status_code)
+            error_message = 'Error: ' + str(r.status_code)
             text_handler(exception_chat, error_message)
-            print('Error:' + str(r.status_code))
+            print('Error: ' + str(r.status_code))
 
     write_json_txt(global_result)
     write_sqlite3(global_result)

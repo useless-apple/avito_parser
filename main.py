@@ -9,13 +9,13 @@ import logging
 from date_and_time import get_date_time, get_date_time_log
 
 from bot.bot import text_handler
-from settings import exception_chat
+from settings import exception_chat, dir_location
 from sqlite import write_sqlite3, get_urls
 from text_converter import clean
 
 date_and_time = get_date_time()
 
-logging.basicConfig(filename="logs/log-{}.log".format(get_date_time_log()), level=logging.INFO,
+logging.basicConfig(filename="{0}logs/log-{1}.log".format(dir_location,get_date_time_log()), level=logging.INFO,
                     format='[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s', )
 log = logging.getLogger("ex")
 

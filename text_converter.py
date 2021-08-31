@@ -45,47 +45,45 @@ def calculation_percent_different_price(price_old, price_new):
 def send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name, old_price, sql_price, price_history_srt, difference_price,
                     percent_difference_price, sql_address, sql_url, sql_params, sql_type_of, type_update):
     from main import log
+    # ID
+    first_row = ''
+    # Name
+    second_row = ''
+    # price
+    third_row = ''
+    # price_history
+    fours_row = ''
+    # address
+    five_row = ''
+    # params
+    six_row = ''
+    # url
+    seven_row = ''
     if type_update == 'update':
-        if sql_type_of == 'Недвижимость':
-            if item_price >= [(sql_price,)]:
-                text_handler(sql_chat, 'Обновилась цена id ' + str(
-                    sql_avito_id) + '  ' + emoji_down + emoji_down + emoji_top_green + '\nСтарая цена = ' + str(
-                    num_conversion(old_price)) + ' руб. / Новая цена = ' + str(
-                    num_conversion(sql_price)) + ' руб.\n\nИзменения цен \n' + str(
-                    price_history_srt) + '\nРазница: ' + difference_price + ' (' + percent_difference_price + '%)\n\nАдрес: ' + str(
-                    sql_address) + '\n\nСсылка ' + str(sql_url))
-            else:
-                text_handler(sql_chat, 'Обновилась цена id ' + str(
-                    sql_avito_id) + '  ' + emoji_top + emoji_top + emoji_down_red + '\nСтарая цена = ' + str(
-                    num_conversion(item_price[0][0])) + ' руб. / Новая цена = ' + str(
-                    num_conversion(sql_price)) + ' руб.\n\nИзменения цен \n' + str(
-                    price_history_srt) + '\nРазница: ' + difference_price + ' (' + percent_difference_price + '%)\n\nАдрес: ' + str(
-                    sql_address) + '\n\nСсылка ' + str(sql_url))
-        elif sql_type_of == 'Транспорт':
-            if item_price >= [(sql_price,)]:
-                text_handler(sql_chat, 'Обновилась цена id ' + str(
-                    sql_avito_id) + '  ' + emoji_down + emoji_down + emoji_top_green + '\n'+ str(sql_name) + '\nСтарая цена = ' + str(
-                    num_conversion(old_price)) + ' руб. / Новая цена = ' + str(
-                    num_conversion(sql_price)) + ' руб.\n\nИзменения цен \n' + str(
-                    price_history_srt) + '\nРазница: ' + difference_price + ' (' + percent_difference_price + '%)\n\nПараметры: ' + str(
-                    sql_params) + '\n\nСсылка ' + str(sql_url))
-            else:
-                text_handler(sql_chat, 'Обновилась цена id ' + str(
-                    sql_avito_id) + '  ' + emoji_top + emoji_top + emoji_down_red + '\n'+ str(sql_name) + '\nСтарая цена = ' + str(
-                    num_conversion(item_price[0][0])) + ' руб. / Новая цена = ' + str(
-                    num_conversion(sql_price)) + ' руб.\n\nИзменения цен \n' + str(
-                    price_history_srt) + '\nРазница: ' + difference_price + ' (' + percent_difference_price + '%)\n\nПараметры: ' + str(
-                    sql_params) + '\n\nСсылка ' + str(sql_url))
+        if item_price >= [(sql_price,)]:
+            first_row = 'Обновилась цена id ' + str(sql_avito_id) + '  ' + emoji_down + emoji_down + emoji_top_green + '\n\n'
+            third_row = 'Старая цена = ' + str(num_conversion(old_price)) + ' руб. / Новая цена = ' + str(num_conversion(sql_price)) + ' руб.\n\n'
         else:
-            log.error('NONETYPE ' + str(sql_avito_id))
-            text_handler(sql_chat, 'NONETYPE ' + str(sql_avito_id))
+            first_row = 'Обновилась цена id ' + str(sql_avito_id) + '  ' + emoji_top + emoji_top + emoji_down_red + '\n\n'
+            third_row = 'Старая цена = ' + str(num_conversion(item_price[0][0])) + ' руб. / Новая цена = ' + str(num_conversion(sql_price)) + ' руб.\n\n'
+        fours_row = 'Изменения цен \n' + str(price_history_srt) + '\nРазница: ' + difference_price + ' (' + percent_difference_price + '%)\n\n'
     elif type_update == 'new':
-        if sql_type_of == 'Недвижимость':
-            text_handler(sql_chat, 'Новое объявление ' + str(sql_avito_id) + '\n\nЦена: ' + str(
-                sql_price) + ' руб.' + '\n\nАдрес: ' + str(sql_address) + '\n\nСсылка ' + str(sql_url))
-        elif sql_type_of == 'Транспорт':
-            text_handler(sql_chat, 'Новое объявление ' + str(sql_avito_id) + '\n'+ str(sql_name) +'\n\nЦена: ' + str(
-                sql_price) + ' руб.' + '\n\nПараметры: ' + str(sql_params) + '\n\nСсылка ' + str(sql_url))
+        first_row = 'Новое объявление ' + str(sql_avito_id) + '\n\n'
+        third_row = 'Цена: ' + str(sql_price) + ' руб.\n\n'
     else:
-        log.error('NONETYPEUPDATE ' + str(sql_avito_id))
-        text_handler(sql_chat, 'NONETYPEUPDATE ' + str(sql_avito_id))
+        log.error('type_update = NONETYPE ' + str(sql_avito_id))
+    second_row = str(sql_name) + '\n\n'
+    five_row = 'Адрес: ' + str(sql_address) + '\n\n'
+    six_row = 'Параметры: ' + str(sql_params)+ '\n\n'
+    seven_row = 'Ссылка ' + str(sql_url) + '\n\n'
+
+    if sql_type_of == 'Недвижимость':
+        mes_to_bot = first_row + '\n\n' + third_row + '\n\n' + fours_row + '\n\n' + five_row + '\n\n' + seven_row
+    elif sql_type_of == 'Транспорт':
+        mes_to_bot = first_row + '\n\n' + second_row + '\n\n' + third_row + '\n\n' + fours_row + '\n\n' + six_row + '\n\n' + seven_row
+    elif sql_type_of == ('Личные вещи' or 'Работа' or 'Для дома и дачи' or 'Предложение услуг' or 'Хобби и отдых' or 'Электроника' or 'Животные' or 'Готовый бизнес и оборудование'):
+        mes_to_bot = first_row + '\n\n' + second_row + '\n\n' + third_row + '\n\n' + fours_row + '\n\n' + seven_row
+    else:
+        log.error('sql_type_of = NONETYPE ' + str(sql_avito_id))
+        mes_to_bot = 'sql_type_of = NONETYPE ' + str(sql_avito_id)
+    text_handler(sql_chat, mes_to_bot)

@@ -2,6 +2,7 @@ import sqlite3
 import json
 import time
 
+
 from date_and_time import get_date_time
 from settings import route_db
 from text_converter import num_conversion, calculation_percent, calculation_different_price, \
@@ -11,6 +12,7 @@ date_and_time = get_date_time()
 
 
 def write_sqlite3(url):
+    from main import log
 
     conn = sqlite3.connect(route_db)
     with conn:
@@ -69,7 +71,7 @@ def write_sqlite3(url):
                                 (str(date_and_time),sql_urls_id, sql_type_of,sql_params, sql_avito_id, sql_city))
                     continue
                 else:
-                    send_mes_to_bot(item_price, sql_chat, sql_avito_id, old_price, sql_price, price_history_srt,
+                    send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name,old_price, sql_price, price_history_srt,
                                     difference_price, percent_difference_price, sql_address, sql_url, sql_params,
                                     sql_type_of, 'update')
 
@@ -77,14 +79,14 @@ def write_sqlite3(url):
                         "UPDATE offers SET price=?, old_price=?, updated_date=?, price_history=?, status=1, urls_id=?, type_of=?, params=? WHERE avito_id=? AND city =?",
                         (sql_price, old_price, str(date_and_time), str(price_history_dumps),sql_urls_id, sql_type_of,sql_params, sql_avito_id,
                          sql_city))
-                    print('Price update | ' + str(sql_avito_id))
+                    log.info('Price update | ' + str(sql_avito_id))
                     time.sleep(5)
 
             else:
-                send_mes_to_bot(None, sql_chat, sql_avito_id, None, sql_price, None,
+                send_mes_to_bot(None, sql_chat, sql_avito_id, sql_name, None, sql_price, None,
                                 None, None, sql_address, sql_url, sql_params,
                                 sql_type_of, 'new')
-                print('No ID -> New Offer | ' + str(sql_avito_id))
+                log.info('No ID -> New Offer | ' + str(sql_avito_id))
 
                 price_history += price_now
                 price_history_dumps = json.dumps(price_history)

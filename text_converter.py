@@ -78,11 +78,11 @@ def send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name, old_price, sql
     seven_row = 'Ссылка ' + str(sql_url) + '\n\n'
 
     if sql_type_of == 'Недвижимость':
-        mes_to_bot = first_row + '\n\n' + third_row + '\n\n' + fours_row + '\n\n' + five_row + '\n\n' + seven_row
+        mes_to_bot = first_row + third_row + fours_row + five_row + seven_row
     elif sql_type_of == 'Транспорт':
-        mes_to_bot = first_row + '\n\n' + second_row + '\n\n' + third_row + '\n\n' + fours_row + '\n\n' + six_row + '\n\n' + seven_row
+        mes_to_bot = first_row + second_row + third_row + fours_row + six_row + seven_row
     elif sql_type_of == ('Личные вещи' or 'Работа' or 'Для дома и дачи' or 'Предложение услуг' or 'Хобби и отдых' or 'Электроника' or 'Животные' or 'Готовый бизнес и оборудование'):
-        mes_to_bot = first_row + '\n\n' + second_row + '\n\n' + third_row + '\n\n' + fours_row + '\n\n' + seven_row
+        mes_to_bot = first_row + second_row + third_row + fours_row + seven_row
     else:
         log.error('sql_type_of = NONETYPE ' + str(sql_avito_id))
         mes_to_bot = 'sql_type_of = NONETYPE ' + str(sql_avito_id)

@@ -87,6 +87,7 @@ def get_item_data(rows, type_of):
 
 
 def get_page_data(page_url, count_try):
+    next_pagination = True
     session = get_session()
     r = session.get(page_url)
     if r.status_code != 200 and count_try < 4:
@@ -112,6 +113,10 @@ def get_page_data(page_url, count_try):
             1].find('a').text
     except:
         type_of = 'None Type'
+    if soup.find_all('div', attrs={"class": re.compile(r"items-items")}):
+        if len(soup.find_all('div', attrs={"class": re.compile(r"items-items")})) > 1:
+            log.info('Found another offers | Break pagination ' + str(page_url))
+            next_pagination = False
     table = soup.find('div', {"data-marker": "catalog-serp"})
     if table:
         if table.find('div', {"data-marker": "witcher/block"}):
@@ -126,8 +131,7 @@ def get_page_data(page_url, count_try):
     else:
         rows = table.find_all('div', {"data-marker": "item"})
         result = get_item_data(rows, type_of)
-
-    return result
+    return result, next_pagination
 
 
 def write_json_txt(result, file):
@@ -157,13 +161,19 @@ def main(main_url):
                 text_handler(exception_chat, error_message)
                 logging.error(error_message)
             result = []
+            next_pagination = True
             for i in range(1, int(count_page) + 1):
-                value = random.random()
-                scaled_value = 4 + (value * (11 - 5))
-                log.info('Parsing page# ' + str(i) + ' of ' + count_page)
-                page_url = url_task + '&p=' + str(i)
-                result += get_page_data(page_url, 1)
-                time.sleep(scaled_value)
+                if next_pagination == True:
+                    value = random.random()
+                    scaled_value = 4 + (value * (11 - 5))
+                    log.info('Parsing page# ' + str(i) + ' of ' + count_page)
+                    page_url = url_task + '&p=' + str(i)
+                    ansver = get_page_data(page_url, 1)
+                    result += ansver[0]
+                    next_pagination = ansver[1]
+                    time.sleep(scaled_value)
+                else:
+                    break
             value = random.random()
             scaled_value = 4 + (value * (11 - 5))
             time.sleep(scaled_value)

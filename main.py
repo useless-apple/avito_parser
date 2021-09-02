@@ -9,14 +9,17 @@ import logging
 from date_and_time import get_date_time, get_date_time_log
 
 from bot.bot import text_handler
-from settings import exception_chat, dir_location
+from settings import EXEPTION_CHAT, DIR_LOCATION
 from sqlite import write_sqlite3, get_urls
 from text_converter import clean
 
 date_and_time = get_date_time()
 
-logging.basicConfig(filename="{0}logs/log-{1}.log".format(dir_location,get_date_time_log()), level=logging.INFO,
-                    format='[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s', )
+logging.basicConfig(
+    filename="{0}logs/log-{1}.log".format(DIR_LOCATION, get_date_time_log()),
+    level=logging.INFO,
+    format='[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
+)
 log = logging.getLogger("ex")
 
 
@@ -45,43 +48,61 @@ def get_item_data(rows, type_of):
         address = ''
         params = ''
 
+        # ID Объявления
         try:
             avito_id = int(row.get('data-item-id'))
         except:
             avito_id = 'Не найден'
 
+        # Название товара
         try:
             name = clean(row.find('h3', {"itemprop": "name"}).text)
         except:
             name = 'Не найден'
 
+        # Цена товара
         try:
             price = int(clean(row.find('meta', {"itemprop": "price"}).get("content")))
         except:
             price = 'Не найден'
 
+        # Ссылка на товар
         try:
             url = 'https://avito.ru' + row.find('a', {"itemprop": "url"}).get("href")
         except:
             url = 'Не найден'
 
+        # Для товара типа "Недвижимость"
         if type_of == 'Недвижимость':
+            # Адрес
             try:
                 address = clean(row.find('div', {"data-marker": "item-address"}).div.span.span.text)
             except:
                 address = 'Не найден'
 
+        # Для товара типа "Транспорт"
         if type_of == 'Транспорт':
+            # Параметры авто
             try:
                 params = clean(row.find('div', {"data-marker": "item-specific-params"}).text)
             except:
                 params = 'Не найден'
+
+            # Адрес
             try:
                 address = clean(row.find('div', attrs={"class": re.compile(r"geo-georeferences")}).span.text)
             except:
                 address = 'Не найден'
-        item = {'avito_id': avito_id, 'name': name, 'price': price, 'address': address, 'url': url, 'type_of': type_of,
-                'params': params}
+
+        item = {
+            'avito_id': avito_id,
+            'name': name,
+            'price': price,
+            'address': address,
+            'url': url,
+            'type_of': type_of,
+            'params': params
+        }
         result.append(item)
     return result
 
@@ -92,18 +113,18 @@ def get_page_data(page_url, count_try):
     r = session.get(page_url)
     if r.status_code != 200 and count_try < 4:
         error_message = 'Error' + str(r.status_code) + ' Try № ' + str(count_try)
-        text_handler(exception_chat, error_message)
+        text_handler(EXEPTION_CHAT, error_message)
         logging.error(error_message)
         time.sleep(1)
         get_page_data(page_url, count_try + 1)
     elif r.status_code == 403:
         error_message = 'Error' + str(r.status_code) + ' Exit'
-        text_handler(exception_chat, error_message)
+        text_handler(EXEPTION_CHAT, error_message)
         logging.error(error_message)
         exit()
     elif count_try > 4:
         error_message = 'Error' + str(r.status_code) + ' Try ended'
-        text_handler(exception_chat, error_message)
+        text_handler(EXEPTION_CHAT, error_message)
         logging.error(error_message)
         result = []
     time.sleep(1)
@@ -117,14 +138,17 @@ def get_page_data(page_url, count_try):
         if len(soup.find_all('div', attrs={"class": re.compile(r"items-items")})) > 1:
             log.info('Found another offers | Break pagination ' + str(page_url))
             next_pagination = False
+
     table = soup.find('div', {"data-marker": "catalog-serp"})
+
     if table:
         if table.find('div', {"data-marker": "witcher/block"}):
             table.find('div', {"data-marker": "witcher/block"}).decompose()
+
     if not table:
         error_message = 'Error not table' + str(soup) + str(table)
         logging.error(error_message)
-        text_handler(exception_chat, error_message)
+        text_handler(EXEPTION_CHAT, error_message)
         print(soup)
         print(table)
         result = []
@@ -140,6 +164,7 @@ def write_json_txt(result, file):
 
 
 def main(main_url):
+    log.info('-----------------------------------------------------------------------------------------------')
     log.info('Starting parsing ' + str(date_and_time))
     global_result = []
     for task in main_url:
@@ -158,7 +183,7 @@ def main(main_url):
             except:
                 count_page = 1
                 error_message = 'Error pagination' + '\n ' + url_task
-                text_handler(exception_chat, error_message)
+                text_handler(EXEPTION_CHAT, error_message)
                 logging.error(error_message)
             result = []
             next_pagination = True
@@ -182,11 +207,12 @@ def main(main_url):
             global_result.append(item)
         else:
             error_message = 'Error: ' + str(r.status_code) + '\n ' + url_task
-            text_handler(exception_chat, error_message)
+            text_handler(EXEPTION_CHAT, error_message)
             logging.error(error_message)
 
     write_json_txt(global_result, 'data.json')
     log.info('Parsing Success')
+    log.info('-----------------------------------------------------------------------------------------------')
     # write_sqlite3(global_result)
 
 

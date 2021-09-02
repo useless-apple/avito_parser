@@ -1,11 +1,11 @@
 #Относительный путь до проекта (нужно для крона)
-dir_location = "/root/parser/"
+DIR_LOCATION = "/root/parser/"
 
 #Путь до базы данных
-route_db = dir_location + "avito_database.db"
+ROUTE_DB = DIR_LOCATION + "avito_database.db"
 
 #Телеграм токен бота
 TG_TOKEN = 'NNNNNNNNNNNNNNNNNNN'
 
 #ID чата для отлавливания ошибок
-exception_chat = 'NNNNNNNNNNNNNN'
+EXEPTION_CHAT = 'NNNNNNNNNNNNNN'

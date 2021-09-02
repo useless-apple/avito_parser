@@ -1,5 +1,7 @@
-route_db = "avito_database.db"
+DIR_LOCATION = ""
+
+ROUTE_DB = DIR_LOCATION + "avito_database.db"
 
 TG_TOKEN = 'NNNNNNNNNNNNNNNNNNN'
 
-exception_chat = 'NNNNNNNNNNNNNN'
+EXEPTION_CHAT = 'NNNNNNNNNNNNNN'

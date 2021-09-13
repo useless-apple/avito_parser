@@ -15,8 +15,6 @@ if __name__ == '__main__':
         write_json_txt(global_result, 'data.json')
         log.info('Parsing Success ' + str(get_date_time()))
         log.info('-----------------------------------------------------------------------------------------------')
-        # with open('data_item.json', encoding='utf-8', newline='') as json_file:
-        #     data = json.load(json_file)
-        #     write_sqlite3(data)
+
     except Exception as e:
         log.exception(str(e))

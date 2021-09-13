@@ -1,9 +1,8 @@
 import time
-
 import cfscrape
 import requests
-from bs4 import BeautifulSoup
 
+from bs4 import BeautifulSoup
 from bot.bot import text_handler
 from helpers import get_random_time
 from new_logging import log

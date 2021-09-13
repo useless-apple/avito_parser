@@ -1,16 +1,15 @@
-import time
+import re
 
 from bot.bot import text_handler
-from helpers import get_random_time
+from date_and_time import time_sleep
 from new_logging import log
-
 from session import get_soup_from_page
 from settings import EXEPTION_CHAT
 from sqlite import write_sqlite3
 from text_converter import clean
-import re
 
 
+# Получаем данные для каждого объявления
 def get_item_data(rows, type_of):
     result = []
     for row in rows:
@@ -80,6 +79,25 @@ def get_item_data(rows, type_of):
     return result
 
 
+# Получаем таблицу с объявлениями
+def get_page_rows(soup, type_of):
+    table = soup.find('div', {"data-marker": "catalog-serp"})
+
+    if table:  # Удаляем рекламные блоки
+        if table.find('div', {"data-marker": "witcher/block"}):
+            table.find('div', {"data-marker": "witcher/block"}).decompose()
+        rows = table.find_all('div', {"data-marker": "item"})
+        result = get_item_data(rows, type_of)
+
+    else:
+        error_message = 'Error not table' + str(soup) + str(table)
+        log.error(error_message)
+        text_handler(EXEPTION_CHAT, 'Error not table// Check LOGS')
+        result = []
+    return result
+
+
+# Получаем страницу с объявлениями
 def get_page_data(page_url, count_try):
     next_pagination = True
     soup = get_soup_from_page(page_url, count_try)
@@ -100,27 +118,11 @@ def get_page_data(page_url, count_try):
         if len(soup.find_all('div', attrs={"class": re.compile(r"items-items")})) > 1:
             log.info('Found another offers | Break pagination ' + str(page_url))
             next_pagination = False
-
-    table = soup.find('div', {"data-marker": "catalog-serp"})
-
-    if table:
-        if table.find('div', {"data-marker": "witcher/block"}):
-            table.find('div', {"data-marker": "witcher/block"}).decompose()
-
-    if not table:
-        error_message = 'Error not table' + str(soup) + str(table)
-        log.error(error_message)
-        text_handler(EXEPTION_CHAT, 'Error not table// Check LOGS')
-        print(soup)
-        print(table)
-        result = []
-    else:
-        rows = table.find_all('div', {"data-marker": "item"})
-        result = get_item_data(rows, type_of)
-
+    result = get_page_rows(soup, type_of)
     return result, next_pagination
 
 
+# Получаем список страниц пагинации
 def get_count_page(soup, url_task):
     try:
         pagination = soup.find('div', {"data-marker": "pagination-button"})
@@ -135,6 +137,7 @@ def get_count_page(soup, url_task):
     return count_page
 
 
+# Получаем данные для одного задания (ссылки со всеми пагинациями)
 def get_result_task(count_page, url_task):
     next_pagination = True
     result = []
@@ -145,12 +148,13 @@ def get_result_task(count_page, url_task):
             page_data = get_page_data(page_url, 1)
             result += page_data[0]
             next_pagination = page_data[1]
-            time.sleep(get_random_time())
+            time_sleep()
         else:
             break
     return result
 
 
+# Получаем глобальный результат по всем заданиям
 def get_global_result(tasks):
     global_result = []
     for task in tasks:
@@ -160,7 +164,7 @@ def get_global_result(tasks):
         soup = get_soup_from_page(url_task + '&p=1', 1)
         count_page = get_count_page(soup, url_task)
         result = get_result_task(count_page, url_task)
-        time.sleep(get_random_time())
+        time_sleep()
         item = [result, task]
         write_sqlite3(item)
         global_result.append(item)

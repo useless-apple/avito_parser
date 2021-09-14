@@ -1,13 +1,10 @@
 import sqlite3
 import json
 from new_logging import log
-from date_and_time import get_date_time
-from date_and_time import time_sleep
+from date_and_time import get_date_time, time_sleep
 from settings import ROUTE_DB
 from text_converter import num_conversion, calculation_percent, calculation_different_price, \
     calculation_percent_different_price, send_mes_to_bot
-
-date_and_time = get_date_time()
 
 
 def write_sqlite3(url):
@@ -28,7 +25,7 @@ def write_sqlite3(url):
             sql_params = url[0][i]['params']
 
             price_history = []
-            price_now = [str(date_and_time), str(sql_price)]
+            price_now = [str(get_date_time()), str(sql_price)]
 
             cur.execute('SELECT avito_id FROM offers WHERE avito_id=?',
                         (sql_avito_id,))
@@ -69,17 +66,18 @@ def write_sqlite3(url):
                 if item_price == [(sql_price,)]:  # Сравниваем цены, и если есть отличие то обновляем их
                     cur.execute(
                         "UPDATE offers SET status=1, updated_date=?,urls_id=?, type_of=?, params=? WHERE avito_id=?",
-                        (str(date_and_time), sql_urls_id, sql_type_of, sql_params, sql_avito_id))
+                        (str(get_date_time()), sql_urls_id, sql_type_of, sql_params, sql_avito_id))
                     continue
                 else:
-                    send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name, old_price, sql_price,
-                                    price_history_srt,
-                                    difference_price, percent_difference_price, sql_address, sql_url, sql_params,
+                    send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name,
+                                    old_price, sql_price, price_history_srt,
+                                    difference_price, percent_difference_price,
+                                    sql_address, sql_url, sql_params,
                                     sql_type_of, 'update')
 
                     cur.execute(
                         "UPDATE offers SET price=?, old_price=?, updated_date=?, price_history=?, status=1, urls_id=?, type_of=?, params=? WHERE avito_id=?",
-                        (sql_price, old_price, str(date_and_time), str(price_history_dumps), sql_urls_id, sql_type_of,
+                        (sql_price, old_price, str(get_date_time()), str(price_history_dumps), sql_urls_id, sql_type_of,
                          sql_params, sql_avito_id))
                     log.info('Price update | ' + str(sql_avito_id))
                     time_sleep(5)
@@ -95,7 +93,7 @@ def write_sqlite3(url):
                 cur.execute(
                     "INSERT OR IGNORE INTO offers ('avito_id','name','price','price_history','address','url','created_date','updated_date','status','city','urls_id','type_of','params') VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (sql_avito_id, sql_name, sql_price, str(price_history_dumps), sql_address, sql_url,
-                     str(date_and_time), str(date_and_time), 1, sql_city, sql_urls_id, sql_type_of, sql_params))
+                     str(get_date_time()), str(get_date_time()), 1, sql_city, sql_urls_id, sql_type_of, sql_params))
                 time_sleep(5)
     conn.commit()
     conn.close()

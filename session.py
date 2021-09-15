@@ -27,19 +27,17 @@ def get_session():
 def get_soup_from_page(page_url, count_try):
     session = get_session()
     r = session.get(page_url)
-    if r.status_code != 200 and count_try < 4:
+    if r.status_code == 403 or r.status_code == 429:
+        error_message = 'Error: ' + str(r.status_code) + ' \nTime to sleep. Exit.'
+        text_handler(EXEPTION_CHAT, error_message)
+        log.error(error_message)
+        exit()
+    elif r.status_code != 200 and count_try < 4:
         error_message = 'Error: ' + str(r.status_code) + ' Try № ' + str(count_try)
         text_handler(EXEPTION_CHAT, error_message)
         log.error(error_message)
         time.sleep(get_random_time())
         soup = get_soup_from_page(page_url, count_try + 1)
-
-    elif r.status_code == 403:
-        error_message = 'Error: ' + str(r.status_code) + ' Exit'
-        text_handler(EXEPTION_CHAT, error_message)
-        log.error(error_message)
-        exit()
-
     elif count_try > 4:
         error_message = 'Error: ' + str(r.status_code) + ' Try ended'
         text_handler(EXEPTION_CHAT, error_message)

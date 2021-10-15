@@ -1,3 +1,4 @@
+import re
 import sqlite3
 import json
 from new_logging import log
@@ -5,6 +6,29 @@ from date_and_time import get_date_time, time_sleep
 from settings import ROUTE_DB
 from text_converter import num_conversion, calculation_percent, calculation_different_price, \
     calculation_percent_different_price, send_mes_to_bot
+
+
+def get_params(name, params, type_of):
+    if type_of == 'Недвижимость':
+        reg_name_data = re.findall('(\S{1,10}) ([0-9,.]{1,100}) (.*) ([0-9,.]{1,100}) (.*)', name)[0]
+        new_params = {
+            'type_home': reg_name_data[0],
+            'size_home': reg_name_data[1].replace(',', '.'),
+            'size_area': reg_name_data[3].replace(',', '.')
+        }
+    elif type_of == 'Транспорт':
+        params_data = [item for item in params.split(', ') if len(item.strip()) > 0]
+        new_params = {
+            'run': re.findall('([0-9,.]{1,100})', params_data[0])[0],
+            'body_type': params_data[2],
+            'drive_type': params_data[3],
+            'fuel': params_data[4]
+        }
+    else:
+        new_params = {
+            'params':params
+        }
+    return new_params
 
 
 def write_sqlite3(url):
@@ -22,7 +46,7 @@ def write_sqlite3(url):
             sql_address = url[0][i]['address']
             sql_url = url[0][i]['url']
             sql_type_of = url[0][i]['type_of']
-            sql_params = url[0][i]['params']
+            sql_params = str(get_params(sql_name, url[0][i]['params'], sql_type_of))
 
             price_history = []
             price_now = [str(get_date_time()), str(sql_price)]
@@ -72,7 +96,7 @@ def write_sqlite3(url):
                     send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name,
                                     old_price, sql_price, price_history_srt,
                                     difference_price, percent_difference_price,
-                                    sql_address, sql_url, sql_params,
+                                    sql_address, sql_url, eval(sql_params),
                                     sql_type_of, 'update')
 
                     cur.execute(
@@ -84,7 +108,7 @@ def write_sqlite3(url):
 
             else:
                 send_mes_to_bot(None, sql_chat, sql_avito_id, sql_name, None, sql_price, None,
-                                None, None, sql_address, sql_url, sql_params,
+                                None, None, sql_address, sql_url, eval(sql_params),
                                 sql_type_of, 'new')
                 log.info('No ID -> New Offer | ' + str(sql_avito_id))
 

@@ -56,7 +56,10 @@ def get_item_data(rows, type_of):
         if type_of == 'Транспорт':
             # Параметры авто
             try:
-                params = clean(row.find('div', {"data-marker": "item-specific-params"}).text)
+                params = row.find('div', {"data-marker": "item-specific-params"})
+                if params.find('span'):
+                    params.find('span').decompose()
+                params = clean(params.text)
             except:
                 params = 'Не найден'
 

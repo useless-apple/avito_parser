@@ -25,11 +25,24 @@ def calculation_percent(price_old, price_new):
 
 def calculation_different_price(price_old, price_new):
     if price_old > price_new:
-        difference_price = '- ' + str(num_conversion(int(price_old) - int(price_new)))
-
+        difference_price = '+ ' + str(num_conversion(int(price_old) - int(price_new)))
     else:
-        difference_price = '+ ' + str(num_conversion(int(price_new) - int(price_old)))
+        difference_price = '- ' + str(num_conversion(int(price_new) - int(price_old)))
     return difference_price
+
+
+def get_correct_params(sql_params, sql_type_of):
+    if len(sql_params) > 0:
+        if sql_type_of == 'Недвижимость':
+            sql_params_str = sql_params['type_home'] + ', ' + sql_params['size_home'] + ' м² ' + sql_params['size_area'] + ' сот.'
+        elif sql_type_of == 'Транспорт':
+            sql_params_str = sql_params['run'] + ' км ' + sql_params['body_type'] + ', ' + sql_params['drive_type'] + ', ' + \
+                             sql_params['fuel']
+        else:
+            sql_params_str = sql_params['params']
+    else:
+        sql_params_str = ''
+    return sql_params_str
 
 
 def calculation_percent_different_price(price_old, price_new):
@@ -46,7 +59,7 @@ def send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name, old_price, sql
                     difference_price,
                     percent_difference_price, sql_address, sql_url, sql_params, sql_type_of, type_update):
     from main import log
-
+    print(sql_params)
     first_row = ''  # ID
     second_row = ''  # Name
     third_row = ''  # price
@@ -54,6 +67,8 @@ def send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name, old_price, sql
     five_row = ''  # address
     six_row = ''  # params
     seven_row = ''  # url
+
+    sql_params_str = get_correct_params(sql_params, sql_type_of)
 
     if type_update == 'update':
         if item_price >= [(sql_price,)]:
@@ -68,7 +83,7 @@ def send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name, old_price, sql
 
             third_row = 'Старая цена = ' + str(num_conversion(item_price[0][0])) + ' руб. / Новая цена = ' + \
                         str(num_conversion(sql_price)) + ' руб.\n\n'
-        fours_row = 'Изменения цен \n' + str(price_history_srt) + '\nРазница: ' + \
+        fours_row = 'Изменения цен \n' + str(price_history_srt) + '\nРазница с начальной ценой: ' + \
                     difference_price + ' (' + percent_difference_price + '%)\n\n'
     elif type_update == 'new':
         first_row = 'Новое объявление ' + str(sql_avito_id) + '\n\n'
@@ -77,11 +92,11 @@ def send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name, old_price, sql
         log.error('type_update = NONETYPE ' + str(sql_avito_id))
     second_row = str(sql_name) + '\n\n'
     five_row = 'Адрес: ' + str(sql_address) + '\n\n'
-    six_row = 'Параметры: ' + str(sql_params) + '\n\n'
+    six_row = 'Параметры: ' + str(sql_params_str) + '\n\n'
     seven_row = 'Ссылка ' + str(sql_url) + '\n\n'
 
     if sql_type_of == 'Недвижимость':
-        mes_to_bot = first_row + third_row + fours_row + five_row + seven_row
+        mes_to_bot = first_row + third_row + fours_row + five_row + six_row + seven_row
     elif sql_type_of == 'Транспорт':
         mes_to_bot = first_row + second_row + third_row + fours_row + six_row + seven_row
     elif sql_type_of == (

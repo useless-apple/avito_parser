@@ -53,7 +53,7 @@ def get_item_data(rows, type_of):
                 address = 'Не найден'
 
         # Для товара типа "Транспорт"
-        if type_of == 'Транспорт':
+        elif type_of == 'Транспорт':
             # Параметры авто
             try:
                 params = clean(row.find('div', {"data-marker": "item-specific-params"}).text)
@@ -66,6 +66,18 @@ def get_item_data(rows, type_of):
             except:
                 address = 'Не найден'
 
+        elif type_of == 'Хобби и отдых':
+            # Параметры объявления
+            try:
+                params = clean(row.find('div', attrs={"class": re.compile(r"iva-item-description")}).text)
+            except:
+                params = 'Не найден'
+
+            # Адрес
+            try:
+                address = clean(row.find('span', attrs={"class": re.compile(r"geo-address")}).span.text)
+            except:
+                address = 'Не найден'
         item = {
             'avito_id': avito_id,
             'name': name,

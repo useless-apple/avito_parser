@@ -84,6 +84,8 @@ def send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name, old_price, sql
         mes_to_bot = first_row + third_row + fours_row + five_row + seven_row
     elif sql_type_of == 'Транспорт':
         mes_to_bot = first_row + second_row + third_row + fours_row + six_row + seven_row
+    elif sql_type_of == 'Хобби и отдых':
+        mes_to_bot = first_row + second_row + third_row + fours_row + five_row + six_row + seven_row
     elif sql_type_of == (
             'Личные вещи' or 'Работа' or 'Для дома и дачи' or 'Предложение услуг' or 'Хобби и отдых' or 'Электроника' or 'Животные' or 'Готовый бизнес и оборудование'):
         mes_to_bot = first_row + second_row + third_row + fours_row + seven_row

@@ -113,24 +113,36 @@ def get_page_rows(soup, type_of):
 def get_page_data(page_url, count_try):
     next_pagination = True
     soup = get_soup_from_page(page_url, count_try)
-    if not soup:
-        result = []
+    if not soup[1]:
+        error_message = 'Next parsing none ' + str(page_url)
+        log.error(error_message)
+        text_handler(EXEPTION_CHAT, error_message)
+        return [], False
+
+    if not soup[0]:
         error_message = 'Soup is None ' + str(page_url)
         log.error(error_message)
         text_handler(EXEPTION_CHAT, error_message)
-        return result, next_pagination
+        return [], False
 
     try:
-        type_of = soup.find('div', {"data-marker": "breadcrumbs"}).find_all('span', {"itemprop": "itemListElement"})[
+        type_of = soup[0].find('div', {"data-marker": "breadcrumbs"}).find_all('span', {"itemprop": "itemListElement"})[
             1].find('a').text
     except:
         type_of = 'None Type'
+        log.warn('type_of = None Type')
 
-    if soup.find_all('div', attrs={"class": re.compile(r"items-items")}):
-        if len(soup.find_all('div', attrs={"class": re.compile(r"items-items")})) > 1:
-            log.info('Found another offers | Break pagination ' + str(page_url))
+    if soup[0].find_all('div', attrs={"class": re.compile(r"items-items")}):
+        if len(soup[0].find_all('div', attrs={"class": re.compile(r"items-items")})) > 1:
+            log.warn('Found another offers | Break pagination ' + str(page_url))
             next_pagination = False
-    result = get_page_rows(soup, type_of)
+    try:
+        result = get_page_rows(soup[0], type_of)
+    except:
+        result = None
+        error_message = 'Error get_page_rows' + '\n ' + page_url
+        text_handler(EXEPTION_CHAT, error_message)
+        log.error(error_message)
     return result, next_pagination
 
 
@@ -154,10 +166,17 @@ def get_result_task(count_page, url_task):
     next_pagination = True
     result = []
     for i in range(1, int(count_page) + 1):
-        if next_pagination:
+        if next_pagination:  # Проверяем нужно ли парсить следующие страницы
             log.info('Parsing page# ' + str(i) + ' of ' + str(count_page))
             page_url = url_task + '&p=' + str(i)
-            page_data = get_page_data(page_url, 1)
+            try:
+                page_data = get_page_data(page_url, 1)
+            except:
+                page_data = None, True
+                error_message = 'Error get_page_data' + '\n ' + page_url
+                text_handler(EXEPTION_CHAT, error_message)
+                log.error(error_message)
+
             result += page_data[0]
             next_pagination = page_data[1]
             time_sleep()
@@ -174,7 +193,7 @@ def get_global_result(tasks):
         task = [task[2], task[3], task[0]]
         log.info('Url parsing ' + str(url_task))
         soup = get_soup_from_page(url_task + '&p=1', 1)
-        count_page = get_count_page(soup, url_task)
+        count_page = get_count_page(soup[0], url_task)
         result = get_result_task(count_page, url_task)
         time_sleep()
         item = [result, task]

@@ -4,6 +4,7 @@ import requests
 
 from bs4 import BeautifulSoup
 from bot.bot import text_handler
+from date_and_time import time_sleep
 from helpers import get_random_time
 from new_logging import log
 from settings import EXEPTION_CHAT
@@ -27,23 +28,35 @@ def get_session():
 def get_soup_from_page(page_url, count_try):
     session = get_session()
     r = session.get(page_url)
-    if r.status_code == 403 or r.status_code == 429:
+    next_parsing = True
+    soup = None
+    if r.status_code == 403:
         error_message = 'Error: ' + str(r.status_code) + ' \nTime to sleep. Exit.'
         text_handler(EXEPTION_CHAT, error_message)
         log.error(error_message)
-        exit()
+        next_parsing = False
+    elif r.status_code == 429 and count_try < 4:
+        error_message = 'Error: ' + str(r.status_code) + ' \nToo many request. Sleep 5min. \nTry № ' + str(count_try)
+        text_handler(EXEPTION_CHAT, error_message)
+        log.error(error_message)
+        time_sleep(300)
+        soup = get_soup_from_page(page_url, count_try + 1)
+    elif r.status_code == 429 and count_try < 2:
+        error_message = 'Error: ' + str(r.status_code) + ' \nToo many request. Sleep 15min. \nTry № ' + str(count_try)
+        text_handler(EXEPTION_CHAT, error_message)
+        log.error(error_message)
+        time_sleep(get_random_time())
+        soup = get_soup_from_page(page_url, count_try + 1)
     elif r.status_code != 200 and count_try < 4:
         error_message = 'Error: ' + str(r.status_code) + ' Try № ' + str(count_try)
         text_handler(EXEPTION_CHAT, error_message)
         log.error(error_message)
-        time.sleep(get_random_time())
+        time_sleep(get_random_time())
         soup = get_soup_from_page(page_url, count_try + 1)
     elif count_try > 4:
         error_message = 'Error: ' + str(r.status_code) + ' Try ended'
         text_handler(EXEPTION_CHAT, error_message)
-        log.error(error_message)
-        soup = None
-        return soup
+        log.warn(error_message)
     else:
         soup = BeautifulSoup(r.text, 'html.parser')
-    return soup
+    return soup, next_parsing

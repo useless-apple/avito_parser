@@ -11,18 +11,21 @@ def num_conversion(a):
     return '{:,}'.format(int(a))
 
 
+# Отчищаем текст перед принятием
 def clean(text):
     return text.replace('\t', '').replace('\n', '').strip()
 
 
+# Расчитываем процент между новой и старой ценой (для истории)
 def calculation_percent(price_old, price_new):
     if price_old > price_new:
-        percent_price_history = '+ ' + str(round(((int(price_old) - int(price_new)) / int(price_new)) * 100, 2))
+        percent_price_history = '- ' + str(round(((int(price_old) - int(price_new)) / int(price_new)) * 100, 2))
     else:
-        percent_price_history = '- ' + str(round(((int(price_new) - int(price_old)) / int(price_old)) * 100, 2))
+        percent_price_history = '+ ' + str(round(((int(price_new) - int(price_old)) / int(price_old)) * 100, 2))
     return percent_price_history
 
 
+# Расчитываем разницу между новой и старой ценой
 def calculation_different_price(price_old, price_new):
     if price_old > price_new:
         difference_price = '- ' + str(num_conversion(int(price_old) - int(price_new)))
@@ -32,14 +35,15 @@ def calculation_different_price(price_old, price_new):
     return difference_price
 
 
-def calculation_percent_different_price(price_old, price_new):
-    if price_old > price_new:
-        percent_difference_price = '- ' + \
-                                   str(round(((int(price_old) - int(price_new)) / int(price_new)) * 100, 2))
-    else:
-        percent_difference_price = '+ ' + \
-                                   str(round(((int(price_new) - int(price_old)) / int(price_old)) * 100, 2))
-    return percent_difference_price
+# Расчитываем процент между новой и старой ценой (для текущей цены)
+# def calculation_percent_different_price(price_old, price_new):
+#     if price_old > price_new:
+#         percent_difference_price = '- ' + \
+#                                    str(round(((int(price_old) - int(price_new)) / int(price_new)) * 100, 2))
+#     else:
+#         percent_difference_price = '+ ' + \
+#                                    str(round(((int(price_new) - int(price_old)) / int(price_old)) * 100, 2))
+#     return percent_difference_price
 
 
 def send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name, old_price, sql_price, price_history_srt,

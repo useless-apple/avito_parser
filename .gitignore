@@ -1,3 +1,4 @@
 logs/*
 settings.py
 venv
+/data.json

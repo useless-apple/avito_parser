@@ -139,7 +139,7 @@ def get_page_data(page_url, count_try):
     try:
         result = get_page_rows(soup[0], type_of)
     except:
-        result = None
+        result = []
         error_message = 'Error get_page_rows' + '\n ' + page_url
         text_handler(EXEPTION_CHAT, error_message)
         log.error(error_message)
@@ -172,7 +172,7 @@ def get_result_task(count_page, url_task):
             try:
                 page_data = get_page_data(page_url, 1)
             except:
-                page_data = None, True
+                page_data = [], True
                 error_message = 'Error get_page_data' + '\n ' + page_url
                 text_handler(EXEPTION_CHAT, error_message)
                 log.error(error_message)

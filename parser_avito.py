@@ -113,17 +113,18 @@ def get_page_rows(soup, type_of):
 def get_page_data(page_url, count_try):
     next_pagination = True
     soup = get_soup_from_page(page_url, count_try)
+    result = []
     if not soup[1]:
         error_message = 'Next parsing none ' + str(page_url)
         log.error(error_message)
         text_handler(EXEPTION_CHAT, error_message)
-        return [], False
+        return result, False
 
     if not soup[0]:
         error_message = 'Soup is None ' + str(page_url)
         log.error(error_message)
         text_handler(EXEPTION_CHAT, error_message)
-        return [], False
+        return result, False
 
     try:
         type_of = soup[0].find('div', {"data-marker": "breadcrumbs"}).find_all('span', {"itemprop": "itemListElement"})[
@@ -139,7 +140,6 @@ def get_page_data(page_url, count_try):
     try:
         result = get_page_rows(soup[0], type_of)
     except:
-        result = []
         error_message = 'Error get_page_rows' + '\n ' + page_url
         text_handler(EXEPTION_CHAT, error_message)
         log.error(error_message)

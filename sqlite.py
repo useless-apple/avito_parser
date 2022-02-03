@@ -3,12 +3,14 @@ import json
 
 from bot.bot import text_handler
 from new_logging import log
-from date_and_time import get_date_time, time_sleep
+from date_and_time import get_date_time
 from settings import ROUTE_DB, EXEPTION_CHAT
-from text_converter import num_conversion, calculation_percent, calculation_different_price, send_mes_to_bot
+from text_converter import num_conversion, calculation_percent, calculation_different_price, parse_items_to_send, \
+    send_mes_to_bot
 
 
 def write_sqlite3(url):
+    items = []
     sql_city = url[1][0]
     sql_chat = url[1][1]
     sql_urls_id = url[1][2]
@@ -74,11 +76,28 @@ def write_sqlite3(url):
                             (str(get_date_time()), sql_urls_id, sql_type_of, sql_params, sql_avito_id))
                         continue
                     else:
-                        send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name,
-                                        old_price, sql_price, price_history_srt,
-                                        difference_price, percent_difference_price,
-                                        sql_address, sql_url, sql_params,
-                                        sql_type_of, 'update')
+                        item = {
+                            'item_price': item_price,
+                            'sql_chat': sql_chat,
+                            'sql_avito_id': sql_avito_id,
+                            'sql_name': sql_name,
+                            'old_price': old_price,
+                            'sql_price': sql_price,
+                            'price_history_srt': price_history_srt,
+                            'difference_price': difference_price,
+                            'percent_difference_price': percent_difference_price,
+                            'sql_address': sql_address,
+                            'sql_url': sql_url,
+                            'sql_params': sql_params,
+                            'sql_type_of': sql_type_of,
+                            'type_update': 'update'
+                        }
+
+                        # send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name,
+                        #                 old_price, sql_price, price_history_srt,
+                        #                 difference_price, percent_difference_price,
+                        #                 sql_address, sql_url, sql_params,
+                        #                 sql_type_of, 'update')
 
                         cur.execute(
                             "UPDATE offers SET price=?, old_price=?, updated_date=?, price_history=?, status=1, urls_id=?, type_of=?, params=? WHERE avito_id=?",
@@ -86,12 +105,27 @@ def write_sqlite3(url):
                              sql_type_of,
                              sql_params, sql_avito_id))
                         log.info('Price update | ' + str(sql_avito_id))
-                        time_sleep(5)
 
                 else:
-                    send_mes_to_bot(None, sql_chat, sql_avito_id, sql_name, None, sql_price, None,
-                                    None, None, sql_address, sql_url, sql_params,
-                                    sql_type_of, 'new')
+                    item = {
+                        'item_price': None,
+                        'sql_chat': sql_chat,
+                        'sql_avito_id': sql_avito_id,
+                        'sql_name': sql_name,
+                        'old_price': None,
+                        'sql_price': sql_price,
+                        'price_history_srt': None,
+                        'difference_price': None,
+                        'percent_difference_price': None,
+                        'sql_address': sql_address,
+                        'sql_url': sql_url,
+                        'sql_params': sql_params,
+                        'sql_type_of': sql_type_of,
+                        'type_update': 'new'
+                    }
+                    # send_mes_to_bot(None, sql_chat, sql_avito_id, sql_name, None, sql_price, None,
+                    #                 None, None, sql_address, sql_url, sql_params,
+                    #                 sql_type_of, 'new')
                     log.info('No ID -> New Offer | ' + str(sql_avito_id))
 
                     price_history.append(price_now)
@@ -100,11 +134,12 @@ def write_sqlite3(url):
                         "INSERT OR IGNORE INTO offers ('avito_id','name','price','price_history','address','url','created_date','updated_date','status','city','urls_id','type_of','params') VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         (sql_avito_id, sql_name, sql_price, str(price_history_dumps), sql_address, sql_url,
                          str(get_date_time()), str(get_date_time()), 1, sql_city, sql_urls_id, sql_type_of, sql_params))
-                    time_sleep(5)
+                items.append(item)
             else:
                 error_message = 'Error: write Sql_item, item is None ' + str(sql_urls_id)
                 text_handler(EXEPTION_CHAT, error_message)
                 log.error(error_message)
+        parse_items_to_send(items)
     conn.commit()
     conn.close()
 

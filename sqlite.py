@@ -5,8 +5,7 @@ from bot.bot import text_handler
 from new_logging import log
 from date_and_time import get_date_time
 from settings import ROUTE_DB, EXEPTION_CHAT
-from text_converter import num_conversion, calculation_percent, calculation_different_price, parse_items_to_send, \
-    send_mes_to_bot
+from text_converter import num_conversion, calculation_percent, calculation_different_price, parse_items_to_send
 
 
 def write_sqlite3(url):
@@ -76,7 +75,7 @@ def write_sqlite3(url):
                             (str(get_date_time()), sql_urls_id, sql_type_of, sql_params, sql_avito_id))
                         continue
                     else:
-                        item = {
+                        items.append({
                             'item_price': item_price,
                             'sql_chat': sql_chat,
                             'sql_avito_id': sql_avito_id,
@@ -91,13 +90,7 @@ def write_sqlite3(url):
                             'sql_params': sql_params,
                             'sql_type_of': sql_type_of,
                             'type_update': 'update'
-                        }
-
-                        # send_mes_to_bot(item_price, sql_chat, sql_avito_id, sql_name,
-                        #                 old_price, sql_price, price_history_srt,
-                        #                 difference_price, percent_difference_price,
-                        #                 sql_address, sql_url, sql_params,
-                        #                 sql_type_of, 'update')
+                        })
 
                         cur.execute(
                             "UPDATE offers SET price=?, old_price=?, updated_date=?, price_history=?, status=1, urls_id=?, type_of=?, params=? WHERE avito_id=?",
@@ -107,7 +100,7 @@ def write_sqlite3(url):
                         log.info('Price update | ' + str(sql_avito_id))
 
                 else:
-                    item = {
+                    items.append({
                         'item_price': None,
                         'sql_chat': sql_chat,
                         'sql_avito_id': sql_avito_id,
@@ -122,10 +115,7 @@ def write_sqlite3(url):
                         'sql_params': sql_params,
                         'sql_type_of': sql_type_of,
                         'type_update': 'new'
-                    }
-                    # send_mes_to_bot(None, sql_chat, sql_avito_id, sql_name, None, sql_price, None,
-                    #                 None, None, sql_address, sql_url, sql_params,
-                    #                 sql_type_of, 'new')
+                    })
                     log.info('No ID -> New Offer | ' + str(sql_avito_id))
 
                     price_history.append(price_now)
@@ -134,7 +124,6 @@ def write_sqlite3(url):
                         "INSERT OR IGNORE INTO offers ('avito_id','name','price','price_history','address','url','created_date','updated_date','status','city','urls_id','type_of','params') VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         (sql_avito_id, sql_name, sql_price, str(price_history_dumps), sql_address, sql_url,
                          str(get_date_time()), str(get_date_time()), 1, sql_city, sql_urls_id, sql_type_of, sql_params))
-                items.append(item)
             else:
                 error_message = 'Error: write Sql_item, item is None ' + str(sql_urls_id)
                 text_handler(EXEPTION_CHAT, error_message)

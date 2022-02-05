@@ -11,6 +11,10 @@ from settings import EXEPTION_CHAT
 
 
 def get_session():
+    """
+    Создаем сессию
+    :return:
+    """
     session = requests.Session()
     session.headers = {
         'Host': 'www.avito.ru',
@@ -26,29 +30,35 @@ def get_session():
 
 
 def get_soup_from_page(page_url, count_try):
+    """
+    Получаем SOUP для любой страницы
+    :param page_url:
+    :param count_try:
+    :return:
+    """
     session = get_session()
     r = session.get(page_url)
     next_parsing = True
-    soup = None
     if r.status_code == 403:
         error_message = 'Error: ' + str(r.status_code) + ' \nTime to sleep. Exit.'
         text_handler(EXEPTION_CHAT, error_message)
         log.error(error_message)
+        soup = None
         next_parsing = False
-    elif r.status_code == 429 and count_try < 4:
-        error_message = 'Error: ' + str(r.status_code) + ' \nToo many request. Sleep 5min. \nTry № ' + str(count_try)
-        text_handler(EXEPTION_CHAT, error_message)
-        log.error(error_message)
-        time_sleep(300)
-        soup = get_soup_from_page(page_url, count_try + 1)
     elif r.status_code == 429 and count_try < 2:
-        error_message = 'Error: ' + str(r.status_code) + ' \nToo many request. Sleep 15min. \nTry № ' + str(count_try)
+        error_message = 'Error: ' + str(r.status_code) + ' \nToo many request. Sleep 10min. \nTry № ' + str(count_try) + '\n' + str(page_url)
         text_handler(EXEPTION_CHAT, error_message)
         log.error(error_message)
-        time_sleep(get_random_time())
+        time.sleep(600)
+        soup = get_soup_from_page(page_url, count_try + 1)
+    elif r.status_code == 429 and count_try < 4:
+        error_message = 'Error: ' + str(r.status_code) + ' \nToo many request. Sleep 15min. \nTry № ' + str(count_try) + '\n' + str(page_url)
+        text_handler(EXEPTION_CHAT, error_message)
+        log.error(error_message)
+        time.sleep(900)
         soup = get_soup_from_page(page_url, count_try + 1)
     elif r.status_code != 200 and count_try < 4:
-        error_message = 'Error: ' + str(r.status_code) + ' Try № ' + str(count_try)
+        error_message = 'Error: ' + str(r.status_code) + ' Try № ' + str(count_try) + '\n' + str(page_url)
         text_handler(EXEPTION_CHAT, error_message)
         log.error(error_message)
         time_sleep(get_random_time())
@@ -57,6 +67,8 @@ def get_soup_from_page(page_url, count_try):
         error_message = 'Error: ' + str(r.status_code) + ' Try ended'
         text_handler(EXEPTION_CHAT, error_message)
         log.warn(error_message)
+        soup = None
     else:
         soup = BeautifulSoup(r.text, 'html.parser')
     return soup, next_parsing
+

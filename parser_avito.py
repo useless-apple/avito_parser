@@ -1,16 +1,21 @@
 import re
+from sqlite import write_sqlite3
 
 from bot.bot import text_handler
 from date_and_time import time_sleep
 from new_logging import log
 from session import get_soup_from_page
 from settings import EXEPTION_CHAT
-from sqlite import write_sqlite3
 from text_converter import clean
 
 
-# Получаем данные для каждого объявления
 def get_item_data(rows, type_of):
+    """
+    Получаем данные для каждого объявления
+    :param rows:
+    :param type_of:
+    :return:
+    """
     result = []
     for row in rows:
         avito_id = ''
@@ -91,8 +96,13 @@ def get_item_data(rows, type_of):
     return result
 
 
-# Получаем таблицу с объявлениями
 def get_page_rows(soup, type_of):
+    """
+    Получаем таблицу с объявлениями
+    :param soup:
+    :param type_of:
+    :return:
+    """
     table = soup.find('div', {"data-marker": "catalog-serp"})
 
     if table:  # Удаляем рекламные блоки
@@ -109,8 +119,13 @@ def get_page_rows(soup, type_of):
     return result
 
 
-# Получаем страницу с объявлениями
 def get_page_data(page_url, count_try):
+    """
+    Получаем страницу с объявлениями
+    :param page_url:
+    :param count_try:
+    :return:
+    """
     next_pagination = True
     soup = get_soup_from_page(page_url, count_try)
     result = []
@@ -146,8 +161,13 @@ def get_page_data(page_url, count_try):
     return result, next_pagination
 
 
-# Получаем список страниц пагинации
 def get_count_page(soup, url_task):
+    """
+    Получаем список страниц пагинации
+    :param soup:
+    :param url_task:
+    :return:
+    """
     try:
         pagination = soup.find('div', {"data-marker": "pagination-button"})
         pagination.find('span', {"data-marker": "pagination-button/prev"}).decompose()
@@ -161,8 +181,13 @@ def get_count_page(soup, url_task):
     return count_page
 
 
-# Получаем данные для одного задания (ссылки со всеми пагинациями)
 def get_result_task(count_page, url_task):
+    """
+    Получаем данные для одного задания (ссылки со всеми пагинациями)
+    :param count_page:
+    :param url_task:
+    :return:
+    """
     next_pagination = True
     result = []
     for i in range(1, int(count_page) + 1):
@@ -185,8 +210,12 @@ def get_result_task(count_page, url_task):
     return result
 
 
-# Получаем глобальный результат по всем заданиям
 def get_global_result(tasks):
+    """
+    Получаем глобальный результат по всем заданиям
+    :param tasks:
+    :return:
+    """
     global_result = []
     for task in tasks:
         url_task = task[1]

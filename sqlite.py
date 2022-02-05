@@ -9,6 +9,11 @@ from text_converter import num_conversion, calculation_percent, calculation_diff
 
 
 def write_sqlite3(url):
+    """
+    Записываем данные в SQLite
+    :param url:
+    :return:
+    """
     items = []
     sql_city = url[1][0]
     sql_chat = url[1][1]
@@ -52,8 +57,12 @@ def write_sqlite3(url):
                     price_history_dumps = json.dumps(price_history)
 
                     price_history_srt = ''
+
+                    start_count = 0
                     if len(price_history) > 0:
-                        for i in range(0, len(price_history)):
+                        if len(price_history) > 9:
+                            start_count = len(price_history) - 9
+                        for i in range(start_count, len(price_history)):
                             if i == 0:
                                 price_history_srt = price_history_srt + \
                                                     'Дата: ' + price_history[i]['data'] + '  ' + \
@@ -134,6 +143,10 @@ def write_sqlite3(url):
 
 
 def get_urls():
+    """
+    Получаем данные для заданий из SQLite
+    :return:
+    """
     conn = sqlite3.connect(ROUTE_DB)
     with conn:
         cur = conn.cursor()

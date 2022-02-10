@@ -65,18 +65,18 @@ def write_sqlite3(url):
                         for i in range(start_count, len(price_history)):
                             if i == 0:
                                 price_history_srt = price_history_srt + \
-                                                    'Дата: ' + price_history[i]['data'] + '  ' + \
-                                                    'Цена: ' + num_conversion(price_history[i]['price']) + ' руб.\n'
+                                                    'Дата: ' + int(price_history[i]['data']) + '  ' + \
+                                                    'Цена: ' + num_conversion(int(price_history[i]['price'])) + ' руб.\n'
                             else:
-                                percent_price_history = calculation_percent(price_history[i - 1]['price'],
-                                                                            price_history[i]['price'])
+                                percent_price_history = calculation_percent(int(price_history[i - 1]['price']),
+                                                                            int(price_history[i]['price']))
                                 price_history_srt = price_history_srt + \
-                                                    'Дата: ' + price_history[i]['data'] + '  ' + \
-                                                    'Цена: ' + num_conversion(price_history[i]['price']) + ' руб.  ' + \
+                                                    'Дата: ' + int(price_history[i]['data']) + '  ' + \
+                                                    'Цена: ' + num_conversion(int(price_history[i]['price'])) + ' руб.  ' + \
                                                     '(' + percent_price_history + '%)\n'
 
-                        difference_price = calculation_different_price(price_history[0]['price'], price_now['price'])
-                        percent_difference_price = calculation_percent(price_history[0]['price'], price_now['price'])
+                        difference_price = calculation_different_price(int(price_history[0]['price']), int(price_now['price']))
+                        percent_difference_price = calculation_percent(int(price_history[0]['price']), int(price_now['price']))
 
                     if item_price == [(sql_price,)]:  # Сравниваем цены, и если есть отличие то обновляем их
                         cur.execute(
